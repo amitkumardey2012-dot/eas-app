@@ -137,9 +137,9 @@
         .nav-badge.show { display: flex; }
 
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .bg-present { background: var(--secondary-grad); } /* GREEN FOR APPROVED */
-        .bg-warning { background: var(--warning); } /* ORANGE FOR PENDING */
-        .bg-danger { background: var(--danger-grad); } /* RED FOR REJECTED */
+        .bg-present { background: var(--secondary-grad); }
+        .bg-warning { background: var(--warning); }
+        .bg-danger { background: var(--danger-grad); }
 
         /* --- CHAT ENGINE STYLES --- */
         .chat-container { display: flex; flex-direction: column; gap: 15px; height: calc(100vh - 300px); overflow-y: auto; padding: 10px; }
@@ -179,6 +179,18 @@
         .notif-item { background: rgba(255,255,255,0.5); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
         .notif-item.unread { background: rgba(106, 17, 203, 0.1); border-left-color: var(--warning); }
         .notif-meta { font-size: 0.7rem; color: #888; margin-top: 5px; }
+
+        .online-user-row { display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,255,0.3); border-radius:10px; margin-bottom:5px;}
+        
+        .app-version-tag {
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.3);
+            padding: 4px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -199,17 +211,22 @@
             <div class="form-group"><input type="password" id="login-pass" placeholder="Password" style="text-align:center;"></div>
             <button class="btn btn-primary btn-block" onclick="login()">Login</button>
             
-            <!-- CLOUD CONFIG BUTTON -->
+            <!-- LOCAL CONFIG (Fallback) -->
             <button id="btn-login-cloud" class="btn btn-outline btn-sm" onclick="openCloudConfig()" style="width:100%; margin-top:15px;">
-                <i class="fas fa-cloud-upload-alt"></i> Cloud Config
+                <i class="fas fa-cloud-upload-alt"></i> Local Config
             </button>
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
+            <!-- APP VERSION -->
+            <div class="app-version-tag">
+                Version <span id="app-version-login">1.0.0</span>
+            </div>
+            
             <!-- SYNC STATUS -->
             <div style="margin-top:10px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
-                 <span id="login-sync-text" style="font-size:0.7rem; color:#666;">Cloud Sync...</span>
+                 <span id="login-sync-text" style="font-size:0.7rem; color:#666;">Checking Cloud...</span>
             </div>
         </div>
     </div>
@@ -314,9 +331,17 @@
                 </div>
                 <p style="font-size:0.75rem; text-align:center; color:#666; margin-top:5px;">Syncs with all devices automatically.</p>
             </div>
+
+            <!-- ONLINE USERS -->
+            <div class="card">
+                <h3>Online Employees <small style="font-size:0.7rem; font-weight:400; color:#666;">(Active now)</small></h3>
+                <div id="online-users-list" style="max-height:150px; overflow-y:auto;">
+                    <div style="text-align:center; color:#999; padding:10px;">Checking...</div>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>Overview</h2>
-                <!-- ADDED LEAVE REQUESTS STAT CARD -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; text-align:center;">
                     <div class="stat-card" onclick="navTo('view-team')">
                         <div style="font-size:1.5rem; font-weight:700; color:var(--primary);" id="stat-emp">0</div>
@@ -328,14 +353,17 @@
                     </div>
                     <div class="stat-card" onclick="navTo('view-approvals')">
                         <div style="font-size:1.5rem; font-weight:700; color:var(--warning);" id="stat-leaves">0</div>
-                        <small>Leave Requests</small>
+                        <small>Pending Leaves</small>
                     </div>
                 </div>
             </div>
         </main>
 
         <main id="view-checkins-adm">
-            <h2 style="font-size:1.2rem; margin-bottom:15px;">All Check-Ins</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="font-size:1.2rem;">All Check-Ins</h2>
+                <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check-in All</button>
+            </div>
             <div class="card">
                 <div style="display:flex; gap:10px; margin-bottom:10px;"><input type="date" id="ci-filter-date" onchange="loadAdminCheckins()"></div>
                 <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp</th><th>Time</th><th>Loc</th><th>Status</th></tr></thead><tbody id="checkins-tbody"></tbody></table></div>
@@ -370,7 +398,12 @@
 
         <!-- === APPROVALS VIEW (ADMIN) === -->
         <main id="view-approvals">
-             <h2 style="font-size:1.2rem; margin-bottom:15px;">Leave Approvals</h2>
+             <h2 style="font-size:1.2rem; margin-bottom:15px;">Leave Reports</h2>
+             <div style="display:flex; gap:10px; margin-bottom:15px;">
+                 <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('current')">This Month</button>
+                 <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('previous')">Last Month</button>
+                 <button class="btn btn-primary btn-sm" onclick="loadAdminApprovals()">Pending</button>
+             </div>
              <div id="pending-approvals-list"></div>
         </main>
 
@@ -478,12 +511,35 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('modal-settings')">&times;</span>
             <h2>Admin Settings</h2>
+            
+            <!-- VERSION DISPLAY -->
+            <div style="text-align:center; margin-bottom:20px; background:rgba(106, 17, 203, 0.1); padding:10px; border-radius:10px;">
+                <small style="color:#666;">Current App Version</small><br>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.0.0</strong>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+                <button class="btn btn-primary btn-block" onclick="forceAppUpdate()"><i class="fas fa-sync"></i> Update App</button>
+                <button class="btn btn-success btn-block" onclick="downloadBackup()"><i class="fas fa-database"></i> Backup DB</button>
+            </div>
+
+            <!-- LOCAL APP UPDATE FEATURE -->
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Local App Update</h3>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Load a new HTML file from your device to update the app instantly (Session only).</p>
+            <div class="form-group"><label>Select new index.html</label><input type="file" id="local-app-file" accept=".html"></div>
+            <button class="btn btn-warning btn-block" onclick="loadLocalApp()"><i class="fas fa-upload"></i> Load & Restart App</button>
+
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Cloud Configuration</h3>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Updating this will sync to all employee devices.</p>
+            <div class="form-group"><label>Bin ID</label><input type="text" id="adm-bin-id"></div>
+            <div class="form-group"><label>Master API Key</label><input type="password" id="adm-api-key"></div>
+            
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Profile</h3>
             <div class="form-group"><label>Email</label><input type="email" id="adm-email"></div>
             <div class="form-group"><label>Mobile</label><input type="tel" id="adm-mobile"></div>
             <div class="form-group"><label>Admin Password</label><input type="password" id="adm-pass" placeholder="New Password"></div>
-            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Security</h3>
-            <div class="form-group"><label>Settings Lock Key</label><input type="password" id="adm-lock-key" maxlength="4" placeholder="4 Digit PIN"></div>
-            <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="saveAdminSettings()">Save Settings</button>
+            
+            <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="saveAdminSettings()">Save All Settings</button>
         </div>
     </div>
 
@@ -500,10 +556,12 @@
 
     <script>
         // --- CONFIGURATION ---
-        // Create a free account at jsonbin.io to get your own Bin ID and Master Key for cloud sync.
-        // If left as default, the app runs in LOCAL MODE only.
-        const DEFAULT_BIN_ID = "YOUR_BIN_ID_HERE"; 
-        const DEFAULT_API_KEY = "YOUR_API_KEY_HERE";
+        // USER PROVIDED KEYS
+        const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
+        const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
+        
+        // APP VERSION
+        const APP_VERSION = "1.1.0"; 
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
@@ -522,15 +580,22 @@
             notifications: [],
             messages: [],
             adminProfile: { email: "admin@eas.com", mobile: "9999999999", pass: "admin", lockKey: "" },
+            cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, // Centralized Config
+            lastSeen: {}, // Online status tracking
             lastModified: Date.now()
         };
         
         let isJsonSync = false;
         let syncInterval = null;
+        let heartbeatInterval = null;
 
         const getAvatar = (name) => `https://picsum.photos/seed/${name}/200/200.jpg`;
 
         window.onload = () => {
+            // Set Version Display
+            if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
+            if(document.getElementById('settings-version-display')) document.getElementById('settings-version-display').innerText = APP_VERSION;
+
             document.getElementById('today-date').innerText = new Date().toDateString();
             document.getElementById('v-date').valueAsDate = new Date();
             document.getElementById('ci-filter-date').valueAsDate = new Date();
@@ -540,6 +605,7 @@
             loadDataLocalOnly();
             checkJsonStatus();
             switchLogin('emp'); 
+            requestNotificationPermission();
         };
 
         // --- SYNC ENGINE ---
@@ -548,41 +614,69 @@
             if(!isJsonSync) return;
             updateSyncStatus('syncing', 'Syncing...');
             window.syncInterval = setInterval(pollCloudDatabase, 10000);
+            
+            // Start Online Heartbeat
+            if(heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(updateHeartbeat, 120000); // Every 2 mins
         }
 
         function stopAutoSync() {
             if (window.syncInterval) clearInterval(window.syncInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
             if(document.getElementById('dash-sync-dot')) {
                 document.getElementById('dash-sync-dot').className = 'dot large offline';
                 document.getElementById('dash-sync-text').innerText = "Offline";
             }
         }
 
-        function pollCloudDatabase() {
-            if(state.isSaving) return;
-            if(JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return;
+        function updateHeartbeat() {
+            if(!state.user || !isJsonSync) return;
+            // Fetch latest state to avoid overwrite conflicts
+            pollCloudDatabase(true).then(() => {
+                // Update lastSeen for current user
+                if(!state.lastSeen) state.lastSeen = {};
+                state.lastSeen[state.user.id] = Date.now();
+                saveData(true); // Silent save
+            });
+        }
 
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
+        function pollCloudDatabase(silent = false) {
+            if(state.isSaving) return;
+            if(JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return Promise.resolve();
+
+            return fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
             .then(res => {
                 if(!res.ok) throw new Error("Sync Error");
                 return res.json();
             })
             .then(data => {
-                if(data && data.record && data.record.lastModified > state.lastModified) {
-                    mergeData(data.record);
-                    saveDataLocalOnly(); 
-                    refreshCurrentView();
-                    updateSyncStatus('online', 'Live (Updated)');
-                } else {
-                    updateSyncStatus('online', 'Live');
+                if(data && data.record) {
+                    // Check if Cloud has new config
+                    if(data.record.cloudConfig) {
+                        state.cloudConfig = data.record.cloudConfig;
+                        // Update local keys for next requests
+                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+                        JSONBIN_ID = state.cloudConfig.binId;
+                        JSONBIN_KEY = state.cloudConfig.masterKey;
+                    }
+
+                    if(data.record.lastModified > state.lastModified) {
+                        mergeData(data.record);
+                        saveDataLocalOnly(); 
+                        if(!silent) refreshCurrentView();
+                        updateSyncStatus('online', 'Live (Updated)');
+                    } else {
+                        if(!silent) updateSyncStatus('online', 'Live');
+                    }
                 }
             })
             .catch(() => {
-                updateSyncStatus('offline', 'Local Mode');
+                if(!silent) updateSyncStatus('offline', 'Local Mode');
             });
         }
 
-        function uploadToCloudFolder() {
+        function uploadToCloudFolder(silent = false) {
             if(!isJsonSync || JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return;
             state.isSaving = true;
             state.lastModified = Date.now();
@@ -591,11 +685,23 @@
                 headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
                 body: JSON.stringify(state)
             })
-            .then(() => { updateSyncStatus('online', 'Saved'); })
+            .then(() => { if(!silent) updateSyncStatus('online', 'Saved'); })
             .finally(() => { state.isSaving = false; });
         }
 
         function checkJsonStatus() {
+            // Use cloudConfig if available, else defaults
+            if(state.cloudConfig && state.cloudConfig.binId) {
+                JSONBIN_ID = state.cloudConfig.binId;
+                JSONBIN_KEY = state.cloudConfig.masterKey;
+                localStorage.setItem('j_bin_id', JSONBIN_ID);
+                localStorage.setItem('j_api_key', JSONBIN_KEY);
+            } else {
+                // Fallback to storage or defaults
+                JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
+                JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
+            }
+
             if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
                 isJsonSync = false;
                 document.getElementById('login-sync-dot').className = 'dot offline';
@@ -614,13 +720,25 @@
                 isJsonSync = true;
                 document.getElementById('login-sync-dot').className = 'dot online';
                 document.getElementById('login-sync-text').innerText = "Connected";
-                document.getElementById('btn-login-cloud').classList.remove('btn-danger');
+                document.getElementById('btn-login-cloud').style.display = 'none';
                 
-                if(data && data.record && data.record.lastModified > state.lastModified) {
-                    mergeData(data.record);
-                    saveDataLocalOnly();
-                } else if(!data.record) {
-                    uploadToCloudFolder(); 
+                if(data && data.record) {
+                    // Sync Config
+                    if(data.record.cloudConfig) {
+                        state.cloudConfig = data.record.cloudConfig;
+                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+                        JSONBIN_ID = state.cloudConfig.binId;
+                        JSONBIN_KEY = state.cloudConfig.masterKey;
+                    }
+
+                    if(data.record.lastModified > state.lastModified) {
+                        mergeData(data.record);
+                        saveDataLocalOnly();
+                    } else if(!data.record.employees && !data.record.cloudConfig) {
+                        // Empty bin, init it
+                        uploadToCloudFolder(); 
+                    }
                 }
                 startAutoSync();
             })
@@ -640,6 +758,7 @@
             if(cloud.notifications) state.notifications = cloud.notifications;
             if(cloud.messages) state.messages = cloud.messages;
             if(cloud.adminProfile) state.adminProfile = cloud.adminProfile;
+            if(cloud.lastSeen) state.lastSeen = cloud.lastSeen;
             state.lastModified = cloud.lastModified;
         }
 
@@ -655,14 +774,16 @@
                 state.notifications = parsed.notifications || [];
                 state.messages = parsed.messages || [];
                 state.adminProfile = parsed.adminProfile || state.adminProfile;
+                state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
+                state.lastSeen = parsed.lastSeen || {};
                 state.lastModified = parsed.lastModified || 0;
             }
             if(state.employees.length === 0) state.employees = DEFAULT_EMPLOYEES;
         }
 
-        function saveData() {
+        function saveData(silent = false) {
             saveDataLocalOnly(); 
-            if(isJsonSync) uploadToCloudFolder();
+            if(isJsonSync) uploadToCloudFolder(silent);
         }
 
         function saveDataLocalOnly() {
@@ -681,8 +802,8 @@
             if(id === 'view-notifications') loadNotifications();
             if(id === 'view-home') {
                 checkStatus();
-                loadEmpLeaveStatus(); // CRITICAL: Refresh leave list when sync happens
-                checkUnreadNotifications(); // Update notification badge
+                loadEmpLeaveStatus(); 
+                checkUnreadNotifications(); 
             }
             if(id === 'view-chat-emp') loadEmpChat();
             if(id === 'view-chat-adm') loadAdminChatHistory();
@@ -717,7 +838,6 @@
             const role = document.querySelector('.tab.active').id === 'tab-emp' ? 'emp' : 'adm';
             
             if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
-                // Allow login in local mode, just warn
                 toast("Note: Running in Local Mode (No Cloud Sync)");
             }
 
@@ -750,6 +870,11 @@
             checkUnreadMessages();
             loadEmpLeaveStatus();
             navTo('view-home');
+            updateHeartbeat(); // Init online status
+            
+            // Start Reminder Interval
+            setInterval(checkReminders, 60000 * 5); // Check every 5 mins
+            checkReminders(); // Check immediately
         }
 
         function initAdmin() {
@@ -778,7 +903,7 @@
             const titles = {
                 'view-home': 'Home', 'view-visits-emp': 'Visits', 'view-history': 'History', 'view-notifications': 'Alerts',
                 'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'Reminders',
-                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Approvals'
+                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Reports'
             };
             document.getElementById('page-title').innerText = titles[id];
             refreshCurrentView();
@@ -814,13 +939,43 @@
         }
 
         function saveLoginCloudSetup() {
-            JSONBIN_ID = document.getElementById('login-cloud-bin').value;
-            JSONBIN_KEY = document.getElementById('login-cloud-key').value;
-            localStorage.setItem('j_bin_id', JSONBIN_ID);
-            localStorage.setItem('j_api_key', JSONBIN_KEY);
+            state.cloudConfig.binId = document.getElementById('login-cloud-bin').value;
+            state.cloudConfig.masterKey = document.getElementById('login-cloud-key').value;
+            localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+            localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+            saveData();
             closeModal('modal-cloud-config');
             toast("Keys Saved. Reloading...");
             setTimeout(() => window.location.reload(), 1500);
+        }
+
+        // --- NOTIFICATIONS & REMINDERS ---
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        }
+
+        function checkReminders() {
+            if(state.user.role !== 'emp') return;
+            
+            const now = new Date();
+            const hour = now.getHours();
+            const today = now.toISOString().split('T')[0];
+            
+            // Check if already checked in
+            const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+            
+            // Reminder logic: Before 11 AM (10:00 to 10:59) and not checked in
+            if(hour === 10 && !checkedIn) {
+                sendLocalNotification("Attendance Reminder", "Please Check In before 11 AM!");
+            }
+        }
+
+        function sendLocalNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/2919/2919600.png" });
+            }
         }
 
         // --- EMPLOYEE FEATURES ---
@@ -853,7 +1008,6 @@
             const btn = document.getElementById('btn-checkin');
             
             if(rec) {
-                // Check if status is Leave
                 if(rec.status === 'Leave') {
                     btn.classList.add('on-leave');
                     btn.classList.remove('checked-in');
@@ -937,7 +1091,6 @@
                 tbody.innerHTML = "<tr><td colspan='3' style='text-align:center'>No records</td></tr>";
             } else {
                 tbody.innerHTML = myAtt.map(a => {
-                    // Determine badge color and text based on status
                     let badgeClass = 'bg-present';
                     let badgeText = 'Present';
                     
@@ -985,7 +1138,38 @@
             `).join('');
         }
 
-        // --- DATE HELPER FOR LEAVE APPROVAL ---
+        function loadLeaveReports(type) {
+            const list = document.getElementById('pending-approvals-list');
+            const now = new Date();
+            let startMonth, endMonth;
+
+            if(type === 'current') {
+                startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            } else {
+                startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+                endMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+            }
+
+            // Filter leaves that overlap with the month
+            const reports = state.leaves.filter(l => {
+                return (l.from <= endMonth && l.to >= startMonth);
+            });
+
+            if(reports.length === 0) {
+                list.innerHTML = `<p style='text-align:center; color:#999; padding:20px;'>No leaves found for ${type === 'current' ? 'this' : 'last'} month.</p>`;
+                return;
+            }
+
+            list.innerHTML = reports.map(r => `
+                <div class="card" style="padding:10px; margin-bottom:10px;">
+                    <div style="font-weight:bold;">${r.name}</div>
+                    <div style="font-size:0.9rem;">${r.from} to ${r.to}</div>
+                    <div style="font-size:0.8rem; color:#666;">Status: <span class="badge ${r.status==='Approved'?'bg-present':r.status==='Rejected'?'bg-danger':'bg-warning'}">${r.status}</span></div>
+                </div>
+            `).join('');
+        }
+
         function getDatesInRange(startDate, endDate) {
             const date = new Date(startDate.getTime());
             const dates = [];
@@ -996,9 +1180,7 @@
             return dates;
         }
 
-        // UPDATED PROCESS LEAVE FUNCTION
         function processLeave(id, status) {
-            // FOR REJECT: We keep the confirmation dialog to prevent accidental clicks
             if(status === 'Rejected') {
                 if(!confirm(`Are you sure you want to Reject this leave request?`)) return;
             }
@@ -1007,10 +1189,8 @@
             if(idx > -1) {
                 const leave = state.leaves[idx];
                 
-                // 1. Change Status Immediately
                 state.leaves[idx].status = status;
                 
-                // 2. Notify Employee
                 state.notifications.push({
                     id: Date.now(),
                     target: state.leaves[idx].eid,
@@ -1019,30 +1199,21 @@
                     read: false
                 });
 
-                // 3. If Approved -> Handle Email & Attendance
                 if(status === 'Approved') {
                     const employee = state.employees.find(e => e.id === leave.eid);
                     
-                    // AUTOMATIC EMAIL (Client-Side)
-                    // Opens the Admin's default email client with a pre-filled draft
                     if(employee && employee.mail) {
                         const subject = encodeURIComponent(`Leave Approved: ${leave.from} to ${leave.to}`);
                         const body = encodeURIComponent(`Hello ${employee.name},\n\nYour leave request has been approved.\n\nDates: ${leave.from} to ${leave.to}\nReason: ${leave.reason}\n\nRegards,\nAdmin`);
-                        
-                        // Opens mail client automatically
                         window.open(`mailto:${employee.mail}?subject=${subject}&body=${body}`, '_blank');
                     }
 
-                    // 4. Mark Attendance as Leave
                     const start = new Date(leave.from);
                     const end = new Date(leave.to);
                     const leaveDates = getDatesInRange(start, end);
                     
                     leaveDates.forEach(dateStr => {
-                        // Remove existing attendance for this date
                         state.attendance = state.attendance.filter(a => !(a.eid === leave.eid && a.date === dateStr));
-                        
-                        // Add Leave Attendance
                         state.attendance.push({
                             eid: leave.eid,
                             name: leave.name,
@@ -1055,12 +1226,9 @@
                     });
                 }
 
-                // 5. Save Data Immediately
                 saveData();
-                
-                // 6. Refresh UI (This removes the item from list automatically)
                 loadAdminApprovals(); 
-                loadDash(); // Refresh stats
+                loadDash();
                 toast(status === 'Approved' ? "Approved & Email Sent" : "Request Rejected");
             }
         }
@@ -1136,6 +1304,31 @@
             let opts = `<option value="ALL">ALL EMPLOYEES</option>`;
             state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
             targetSelect.innerHTML = opts;
+
+            // Load Online Users
+            loadOnlineUsers();
+        }
+
+        function loadOnlineUsers() {
+            const list = document.getElementById('online-users-list');
+            const now = Date.now();
+            const onlineThreshold = 5 * 60 * 1000; // 5 minutes
+
+            const onlineEmployees = state.employees.filter(e => {
+                const lastSeen = state.lastSeen[e.id];
+                return lastSeen && (now - lastSeen < onlineThreshold);
+            });
+
+            if(onlineEmployees.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem; padding:10px;'>No employees currently online.</p>";
+            } else {
+                list.innerHTML = onlineEmployees.map(e => `
+                    <div class="online-user-row">
+                        <div class="dot online" style="width:8px; height:8px;"></div>
+                        <div style="font-weight:600; font-size:0.9rem;">${e.name}</div>
+                    </div>
+                `).join('');
+            }
         }
 
         function loadAdminCheckins() {
@@ -1151,6 +1344,32 @@
                     <td><span class="badge ${a.status === 'Leave' ? 'bg-warning' : 'bg-present'}">${a.status === 'Leave' ? 'Leave' : 'Present'}</span></td>
                 </tr>
             `).join('');
+        }
+
+        function proxyCheckInAll() {
+            if(!confirm("Check in ALL employees for today?")) return;
+            const today = new Date().toISOString().split('T')[0];
+            const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            
+            let count = 0;
+            state.employees.forEach(emp => {
+                // Check if already checked in
+                const exists = state.attendance.find(a => a.eid === emp.id && a.date === today);
+                if(!exists) {
+                    state.attendance.push({
+                        eid: emp.id,
+                        name: emp.name,
+                        date: today,
+                        time: time,
+                        lat: "Admin", lng: "Proxy",
+                        status: 'Present'
+                    });
+                    count++;
+                }
+            });
+            saveData();
+            loadAdminCheckins();
+            toast(`Checked in ${count} employees.`);
         }
 
         function performProxyCheckIn(eid, ename) {
@@ -1509,11 +1728,22 @@
             document.getElementById('adm-email').value = state.adminProfile.email || "";
             document.getElementById('adm-mobile').value = state.adminProfile.mobile || "";
             document.getElementById('adm-pass').value = "";
-            document.getElementById('adm-lock-key').value = state.adminProfile.lockKey || "";
+            document.getElementById('adm-bin-id').value = state.cloudConfig.binId || "";
+            document.getElementById('adm-api-key').value = state.cloudConfig.masterKey || "";
             modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
         }
 
         function saveAdminSettings() {
+            // Update Cloud Config
+            const newBinId = document.getElementById('adm-bin-id').value;
+            const newApiKey = document.getElementById('adm-api-key').value;
+            if(newBinId && newApiKey) {
+                state.cloudConfig.binId = newBinId;
+                state.cloudConfig.masterKey = newApiKey;
+                toast("Cloud Config Updated. All employees will sync shortly.");
+            }
+
+            // Update Profile
             state.adminProfile.email = document.getElementById('adm-email').value;
             state.adminProfile.mobile = document.getElementById('adm-mobile').value;
             const newPass = document.getElementById('adm-pass').value;
@@ -1522,11 +1752,45 @@
                 state.user.pass = newPass; 
                 toast("Password Updated");
             }
-            const lockKey = document.getElementById('adm-lock-key').value;
-            if(lockKey && lockKey.length === 4) state.adminProfile.lockKey = lockKey;
+            
             saveData();
             closeModal('modal-settings');
-            toast("Settings Saved");
+        }
+
+        function downloadBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "eas_backup_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            toast("Backup Downloaded");
+        }
+
+        function forceAppUpdate() {
+            // Force reload to bypass cache
+            if(confirm("This will reload the app to check for updates. Continue?")) {
+                window.location.reload(true);
+            }
+        }
+
+        // --- LOCAL APP UPDATE FEATURE ---
+        function loadLocalApp() {
+            const fileInput = document.getElementById('local-app-file');
+            const file = fileInput.files[0];
+            if(!file) return toast("Please select an HTML file.");
+
+            if(confirm("This will replace the current app with the selected file immediately. Unsaved changes might be lost. Continue?")) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Overwrite the entire document with the new content
+                    document.open();
+                    document.write(e.target.result);
+                    document.close();
+                };
+                reader.readAsText(file);
+            }
         }
 
         function manualSync() { const btn = document.getElementById('btn-force-sync'); btn.classList.add('syncing'); uploadToCloudFolder(); setTimeout(()=>btn.classList.remove('syncing'), 1000); }
