@@ -21,7 +21,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v7';
+                const CACHE_NAME = 'eas-pwa-cache-v8';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -120,7 +120,7 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-light); font-weight: 600; }
         input, select, textarea { width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; font-family: inherit; font-size: 1rem; transition: 0.3s; background: rgba(255,255,255,0.6); -webkit-appearance: none; }
-        input:focus, select:focus, textarea:focus { border-color: #6a11cb; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 4px rgba(106, 17, 203, 0.1); }
+        input:focus, select:focus, textarea:focus { border-color: #6a11cb; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 0 4px rgba(106, 17, 203, 0.1); }
 
         .login-tabs { display: flex; background: rgba(255,255,255,0.7); padding: 4px; border-radius: 25px; margin-bottom: 25px; backdrop-filter: blur(5px); }
         .tab { flex: 1; text-align: center; padding: 10px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 0.9rem; color: #666; transition: 0.3s; }
@@ -137,12 +137,12 @@
         .user-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
         .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.05); flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .user-details h4 { margin: 0; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-        .user-details p { margin: 2px 0 0 0; font-size: 0.8rem; color: #888; }
+        .user-details p { margin: 2px 0 0 0 0; font-size: 0.8rem; color: #888; }
 
         .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; background: rgba(255, 255, 255, 0.65); padding: 10px 5px; border-radius: 30px; display: flex; justify-content: space-around; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding-bottom: calc(10px + var(--safe-bottom)); }
         .nav-item { text-align: center; color: #888; font-size: 0.65rem; cursor: pointer; flex: 1; transition: 0.3s; padding: 8px 0; border-radius: 20px; position: relative; }
         .nav-item.active { color: white; background: var(--primary-grad); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4); }
-        .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 2px; position: relative; }
+        .nav-icon { font-size:1.4rem; display: block; margin-bottom: 2px; position: relative; }
 
         .nav-badge { position: absolute; top: 0px; right: 15px; background: var(--danger); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; }
         .nav-badge.show { display: flex; }
@@ -255,7 +255,7 @@
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">1.6.1</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">1.7.0</span></div>
             
             <div style="margin-top:10px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
@@ -387,7 +387,7 @@
                         <div style="font-size:1.5rem; font-weight:700; color:var(--primary);" id="stat-emp">0</div>
                         <small>Employees</small>
                     </div>
-                    <div class="stat-card" onclick="navTo('view-checkins-adm')">
+                    <div class="stat-card" onclick="navTo('view-reports')">
                         <div style="font-size:1.5rem; font-weight:700; color:var(--secondary);" id="stat-pres">0</div>
                         <small>Present Today</small>
                     </div>
@@ -455,7 +455,10 @@
             
             <!-- Daily Report -->
             <div class="card">
-                <h3>Daily Attendance Report</h3>
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Daily Attendance Report</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadDailyReportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                </div>
                 <div class="form-group">
                     <label>Select Date</label>
                     <input type="date" id="rep-date" onchange="generateDailyReport()">
@@ -467,7 +470,10 @@
 
             <!-- Monthly Report -->
             <div class="card">
-                <h3>Monthly Summary</h3>
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Monthly Summary</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadMonthlyReportCSV()"><i class="fas fa-file-excel"></i> CSV</button>
+                </div>
                 <div class="form-group">
                     <label>Select Month</label>
                     <input type="month" id="rep-month" onchange="generateMonthlyReport()">
@@ -556,8 +562,10 @@
             <div class="nav-item" onclick="navTo('view-team', this)"><span class="nav-icon"><i class="fas fa-users"></i></span>Team</div>
             <div class="nav-item" onclick="navTo('view-approvals', this)"><span class="nav-icon"><i class="fas fa-user-clock"></i></span>Leaves</div>
             <div class="nav-item" onclick="navTo('view-visits-adm', this)"><span class="nav-icon"><i class="fas fa-file-invoice"></i></span>Visits</div>
-            <div class="nav-item" onclick="navTo('view-meetings', this)"><span class="nav-icon"><i class="fas fa-video"></i></span>Meets</div>
+            <!-- NEW: REPORTS BUTTON -->
+            <div class="nav-item" onclick="navTo('view-reports', this)"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Rpts</div>
             <div class="nav-item" onclick="navTo('view-chat-adm', this)"><span class="nav-icon"><i class="fas fa-comments"></i></span>Msg</div>
+            <div class="nav-item" onclick="navTo('view-meetings', this)"><span class="nav-icon"><i class="fas fa-video"></i></span>Meets</div>
             <div class="nav-item" onclick="logout()"><span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>Exit</div>
         </nav>
     </div>
@@ -609,7 +617,7 @@
             <h2>Admin Settings</h2>
             <div style="text-align:center; margin-bottom:20px; background:rgba(106, 17, 203, 0.1); padding:10px; border-radius:10px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.6.1</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.7.0</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -651,7 +659,7 @@
         // --- CONFIGURATION ---
         const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
         const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
-        const APP_VERSION = "1.6.1"; 
+        const APP_VERSION = "1.7.0"; 
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
@@ -689,28 +697,29 @@
             if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
             if(document.getElementById('settings-version-display')) document.getElementById('settings-version-display').innerText = APP_VERSION;
 
+            // 2. Initialize Dates
             document.getElementById('today-date').innerText = new Date().toDateString();
             document.getElementById('v-date').valueAsDate = new Date();
             document.getElementById('ci-filter-date').valueAsDate = new Date();
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            document.getElementById('rep-date').valueAsDate = new Date();
-            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            
-            // 2. Load Local Data IMMEDIATELY (Do not wait for cloud)
+            document.getElementById('rep-date').valueAsDate = new Date(); // Pre-fill Daily Report with today
+            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; // Pre-fill Monthly Report with current month
+
+            // 3. Load Local Data IMMEDIATELY (Do not wait for cloud)
             loadDataLocalOnly();
             
-            // 3. CRITICAL: If local employees are empty, load defaults instantly so login works offline
+            // 4. CRITICAL: If local employees are empty, load defaults instantly so login works offline
             if(state.employees.length === 0) {
                 state.employees = DEFAULT_EMPLOYEES;
                 saveDataLocalOnly(); // Save defaults to local storage
             }
 
-            // 4. Enable UI immediately
+            // 5. Enable UI immediately
             switchLogin('emp'); 
             requestNotificationPermission();
 
-            // 5. Check Cloud in background (with a 5 second timeout safety net)
+            // 6. Check Cloud in background (with a 5 second timeout safety net)
             checkJsonStatus(); 
         };
 
@@ -778,7 +787,6 @@
             });
         }
 
-        // Helper to set UI to Local Mode
         function setLocalModeUI() {
             isJsonSync = false;
             document.getElementById('login-sync-dot').className = 'dot offline';
@@ -879,7 +887,7 @@
                         mergeData(cloudData.record);
                         saveDataLocalOnly();
                         if(!silent) {
-                            alert("⚠️ Sync Conflict: Another device updated data. Loading latest version.");
+                            alert("⚠️ Sync Conflict: Another device updated data. Loaded latest version.");
                             refreshCurrentView();
                         }
                         return; 
@@ -952,7 +960,6 @@
             if(id === 'view-dashboard') loadDash();
             if(id === 'view-team') loadTeam();
             if(id === 'view-checkins-adm') loadAdminCheckins();
-            if(id === 'view-visits-emp') loadEmpVisits();
             if(id === 'view-visits-adm') loadAdminVisits();
             if(id === 'view-history') loadHistory();
             if(id === 'view-notifications') loadNotifications();
@@ -1020,7 +1027,7 @@
             loadEmpLeaveStatus();
             navTo('view-home');
             updateHeartbeat(); 
-            startAutoReminders(); // Start 5 min reminder
+            startAutoReminders(); 
         }
 
         function initAdmin() {
@@ -1048,8 +1055,8 @@
             if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
             const titles = {
                 'view-home': 'Home', 'view-visits-emp': 'Visits', 'view-history': 'History', 'view-notifications': 'Alerts',
-                'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'Reminders',
-                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Mgmt', 'view-reports': 'Reports', 'view-meetings': 'Meetings'
+                'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'view-reminders',
+                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Mgmt', 'view-reports': 'Reports', 'view-meetings': 'Meets'
             };
             document.getElementById('page-title').innerText = titles[id];
             refreshCurrentView();
@@ -1271,15 +1278,6 @@
             `).join('');
         }
 
-        function deleteLeave(id) {
-            if(confirm("Are you sure you want to delete this leave request?")) {
-                state.leaves = state.leaves.filter(l => l.id !== id);
-                saveData();
-                loadAdminApprovals();
-                toast("Leave request deleted");
-            }
-        }
-
         function loadLeaveReports(type) {
             const list = document.getElementById('pending-approvals-list');
             const now = new Date();
@@ -1397,7 +1395,7 @@
                     <div class="rep-stat"><h4>${absentCount}</h4><small>Abs</small></div>
                     <div class="rep-stat"><h4>${leaveCount}</h4><small>Leave</small></div>
                 </div>
-                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
             `;
         }
 
@@ -1439,8 +1437,54 @@
             });
 
             area.innerHTML = `
-                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
             `;
+        }
+
+        function downloadDailyReportCSV() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return toast("Select Date");
+            const area = document.getElementById('daily-report-area');
+            const rows = [['Date', 'Name', 'ID', 'Status', 'Time']];
+            
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { statusBadge = 'bg-warning'; }
+                } 
+                rows.push([date, emp.name, emp.id, status, att ? att.time : '-']);
+            });
+            downloadCSV(rows, `Daily_Report_${date}.csv`);
+        }
+
+        function downloadMonthlyReportCSV() {
+            const monthVal = document.getElementById('rep-month').value;
+            if(!monthVal) return toast("Select Month");
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const rows = [['Month', 'Emp Name', 'Present', 'Leave', 'Absent', 'Total Days']];
+            
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                rows.push([monthVal, emp.name, p, l, a, p+l+a]);
+            });
+            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
         }
 
         // --- CHAT ENGINE ---
@@ -1611,46 +1655,210 @@
             `).join('');
         }
 
-        function deleteSelectedCheckins() {
-            const checkboxes = document.querySelectorAll('.chk-ci:checked');
-            if(checkboxes.length === 0) return toast("Select entries to delete");
-            if(!confirm(`Delete ${checkboxes.length} selected entries?`)) return;
-            const toDelete = Array.from(checkboxes).map(cb => cb.value.split('_')); 
-            state.attendance = state.attendance.filter(a => {
-                return !toDelete.some(d => d[0] === a.date && d[1] === a.eid);
-            });
-            saveData();
-            loadAdminCheckins();
-            toast("Deleted successfully");
+        // === NEW: REPORTS LOGIC === ADMIN === -->
+        function loadAdminApprovals() {
+            const list = document.getElementById('pending-approvals-list');
+            const requests = state.leaves.filter(l => l.status === 'Pending');
+            if(requests.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No pending leave requests.</p>";
+                return;
+            }
+            list.innerHTML = requests.map(r => `
+                <div class="card" style="padding:15px; border-left: 5px solid var(--warning);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <h3 style="margin:0; font-size:1rem;">${r.name}</h3>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-sm btn-danger" onclick="deleteLeave(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:5px; font-weight:600; color:var(--primary);">${r.from} to ${r.to}</div>
+                    <p style="margin:0 0 10px 0; font-size:0.9rem; color:#555; font-style:italic;">"${r.reason}"</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-success btn-sm" onclick="processLeave(${r.id}, 'Approved')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="processLeave(${r.id}, 'Rejected')">Reject</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function toggleAllChecks(source) {
-            const checkboxes = document.querySelectorAll('.chk-ci');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-        }
+        // --- NEW: REPORTS LOGIC (ADMIN) === -->
+        function generateDailyReport() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return;
+            const area = document.getElementById('daily-report-area');
+            
+            let presentCount = 0;
+            let absentCount = 0;
+            let leaveCount = 0;
+            let rows = '';
 
-        function proxyCheckInAll() {
-            if(!confirm("Check in ALL employees for today?")) return;
-            const today = new Date().toISOString().split('T')[0];
-            const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            let count = 0;
             state.employees.forEach(emp => {
-                const exists = state.attendance.find(a => a.eid === emp.id && a.date === today);
-                if(!exists) {
-                    state.attendance.push({
-                        eid: emp.id,
-                        name: emp.name,
-                        date: today,
-                        time: time,
-                        lat: "Admin", lng: "Proxy",
-                        status: 'Present'
-                    });
-                    count++;
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { presentCount++; statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { leaveCount++; statusBadge = 'bg-warning'; }
+                } else {
+                    absentCount++;
                 }
+
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${emp.id}</td>
+                    <td><span class="badge ${statusBadge}">${status}</span></td>
+                    <td>${att ? att.time : '-'}</td>
+                </tr>`;
             });
-            saveData();
-            loadAdminCheckins();
-            toast(`Checked in ${count} employees.`);
+
+            area.innerHTML = `
+                <div class="report-summary-box">
+                    <div class="rep-stat"><h4>${presentCount}</h4><small>Present</small></div>
+                    <div class="rep-stat"><h4>${absentCount}</h4><small>Abs</small></div>
+                    <div class="rep-stat"><h4>${leaveCount}</h4><small>Leave</small></div>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
+        }
+
+        function generateMonthlyReport() {
+            const monthVal = document.getElementById('rep-month').value; // YYYY-MM
+            if(!monthVal) return;
+            const area = document.getElementById('monthly-report-area');
+            const [year, month] = monthVal.split('-').map(Number);
+            
+            // Get days in month
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            let rows = '';
+
+            state.employees.forEach(emp => {
+                // Calculate stats for this employee
+                let p = 0, l = 0, a = 0;
+                
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                        else a++;
+                    }
+                }
+                
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${p}</td>
+                    <td>${l}</td>
+                    <td>${a}</td>
+                </tr>`;
+            });
+
+            area.innerHTML = `
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
+        }
+
+        function downloadDailyReportCSV() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return toast("Select Date");
+            const area = document.getElementById('daily-report-area');
+            const rows = [['Date', 'Name', 'ID', 'Status', 'Time']];
+            
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { statusBadge = 'bg-warning'; }
+                } 
+                rows.push([date, emp.name, emp.id, status, att ? att.time : '-']);
+            });
+            downloadCSV(rows, `Daily_Report_${date}.csv`);
+        }
+
+        function downloadMonthlyReportCSV() {
+            const monthVal = document.getElementById('rep-month').value;
+            if(!monthVal) return toast("Select Month");
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const rows = [['Month', 'Emp Name', 'Present', 'Leave', 'Absent', 'Total Days']];
+            
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                rows.push([monthVal, emp.name, p, l, a, p+l+a]);
+            });
+            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
+        }
+
+        // --- ADMIN FEATURES ---
+        function loadDash() {
+            document.getElementById('stat-emp').innerText = state.employees.length;
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stat-pres').innerText = state.attendance.filter(a => a.date === today && a.status !== 'Leave').length;
+            const pendingLeaves = state.leaves.filter(l => l.status === 'Pending').length;
+            document.getElementById('stat-leaves').innerText = pendingLeaves.length;
+            const targetSelect = document.getElementById('chat-target-adm');
+            let opts = `<option value="ALL">ALL EMPLOYEES</option>`;
+            state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
+            targetSelect.innerHTML = opts;
+            loadOnlineUsers();
+        }
+
+        function loadOnlineUsers() {
+            const list = document.getElementById('online-users-list');
+            const now = Date.now();
+            const onlineThreshold = 5 * 60 * 1000; 
+            const onlineEmployees = state.employees.filter(e => {
+                const lastSeen = state.lastSeen[e.id];
+                return lastSeen && (now - lastSeen < onlineThreshold);
+            });
+            if(onlineEmployees.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem; padding:10px;'>No employees currently online.</p>";
+            } else {
+                list.innerHTML = onlineEmployees.map(e => `
+                    <div class="online-user-row">
+                        <div class="dot online" style="width:8px; height:8px;"></div>
+                        <div style="font-weight:600; font-size:0.9rem;">${e.name}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function loadAdminCheckins() {
+            const filterDate = document.getElementById('ci-filter-date').value;
+            const tbody = document.getElementById('checkins-tbody');
+            const data = state.attendance.filter(a => a.date === filterDate);
+            if(data.length === 0) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No check-ins</td></tr>";
+            else tbody.innerHTML = data.map(a => `
+                <tr>
+                    <td><input type="checkbox" class="chk-ci" value="${a.date}_${a.eid}"></td>
+                    <td><b>${a.name}</b></td>
+                    <td>${a.time}</td>
+                    <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:blue;">Map</a>`}</td>
+                    <td><span class="badge ${a.status === 'Leave' ? 'bg-warning' : 'bg-present'}">${a.status === 'Leave' ? 'Leave' : 'Present'}</span></td>
+                </tr>
+            `).join('');
         }
 
         function loadTeam() {
@@ -1761,7 +1969,7 @@
 
         function downloadCSV(data, filename) {
             let csvContent = "data:text/csv;charset=utf-8,";
-            data.forEach(row => { csvContent += row.map(item => `"${item}"`).join(",") + "\r\n"; });
+            data.forEach(row => { csvContent += row.map(item => `"${item}"`).join(",") + "\r\n"); });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -1793,339 +2001,4 @@
             const msg = document.getElementById('rem-msg').value;
             if(!msg) return toast("Enter message");
             const notif = { id: Date.now(), message: msg, date: new Date().toLocaleString(), read: false };
-            if(target === 'ALL') { state.notifications.push({ ...notif, target: 'ALL' }); toast("Sent to ALL"); }
-            else { state.notifications.push({ ...notif, target: target }); toast("Sent to Employee"); }
-            saveData();
-            document.getElementById('rem-msg').value = "";
-        }
-
-        function sendWhatsApp() {
-            const target = document.getElementById('rem-target').value;
-            const msg = document.getElementById('rem-msg').value;
-            if(!msg) return toast("Enter a message first.");
-            if(target === 'ALL') { toast("Select a specific employee to WhatsApp."); return; }
-            const emp = state.employees.find(e => e.id === target);
-            if(emp && emp.mobile) {
-                let mobile = emp.mobile.replace(/[^0-9]/g, '');
-                const url = `https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`;
-                window.open(url, '_blank');
-                toast("Opening WhatsApp...");
-            } else { toast("Employee mobile number not found."); }
-        }
-
-        // --- NOTIFICATIONS ---
-        function loadNotifications() {
-            const list = document.getElementById('notifications-list');
-            const myNotifs = state.notifications.filter(n => n.target === 'ALL' || n.target === state.user.id).reverse();
-            if(myNotifs.length === 0) list.innerHTML = "<p style='text-align:center; color:#999;'>No notifications.</p>";
-            else list.innerHTML = myNotifs.map(n => `
-                <div class="notif-item ${n.read ? '' : 'unread'}">
-                    <div style="font-weight:600;">${n.message}</div>
-                    <div class="notif-meta">${n.date}</div>
-                </div>
-            `).join('');
-        }
-
-        function checkUnreadNotifications() {
-            const unreadCount = state.notifications.filter(n => (n.target === 'ALL' || n.target === state.user.id) && !n.read).length;
-        }
-
-        function markAllRead() {
-            state.notifications.forEach(n => { if(n.target === 'ALL' || n.target === state.user.id) n.read = true; });
-            saveData();
-            loadNotifications();
-            checkUnreadNotifications();
-            toast("All marked read");
-        }
-
-        // --- MEETING SCHEDULER LOGIC ---
-        function loadMeetingTargetOptions() {
-            const select = document.getElementById('meet-target');
-            let html = `<option value="">Select Employee...</option>`;
-            state.employees.forEach(e => {
-                html += `<option value="${e.id}">${e.name} (${e.id})</option>`;
-            });
-            select.innerHTML = html;
-        }
-
-        function scheduleMeeting() {
-            const target = document.getElementById('meet-target').value;
-            const title = document.getElementById('meet-title').value;
-            const date = document.getElementById('meet-date').value;
-            const time = document.getElementById('meet-time').value;
-            const type = document.getElementById('meet-type').value;
-
-            if(!target || !title || !date || !time) return toast("Please fill all fields");
-
-            const employee = state.employees.find(e => e.id === target);
-            if(!employee) return toast("Employee not found");
-
-            // 1. Save to internal Meeting List
-            state.meetings.push({
-                id: Date.now(),
-                title, date, time, type, target, targetName: employee.name
-            });
-
-            // 2. Send Notification to Employee
-            state.notifications.push({
-                id: Date.now(),
-                target: target,
-                message: `Meeting Scheduled: ${title} (${type}) on ${date} at ${time}. Please be available on WhatsApp.`,
-                date: new Date().toLocaleString(),
-                read: false
-            });
-
-            // 3. Send WhatsApp Link to Admin
-            if(employee.mobile) {
-                let cleanMobile = employee.mobile.replace(/[^0-9]/g, '');
-                const textBody = encodeURIComponent(`Hello ${employee.name},\n\nI have scheduled a ${type} with you for: ${title} on ${date} at ${time}.\n\nPlease join via WhatsApp.`);
-                const url = `https://wa.me/${cleanMobile}?text=${textBody}`;
-                window.open(url, '_blank');
-            } else {
-                toast("Meeting saved (No mobile number for WA)");
-            }
-
-            saveData();
-            loadMeetingsList();
-            toast("Meeting Scheduled & Notification Sent");
-            // Clear Form
-            document.getElementById('meet-title').value = "";
-            document.getElementById('meet-target').value = "";
-        }
-
-        function loadMeetingsList() {
-            const list = document = document.getElementById('meetings-list');
-            const myMeets = state.meetings.slice().reverse();
-            if(myMeets.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999;'>No meetings scheduled.</p>";
-            } else {
-                list.innerHTML = myMeets.map(m => {
-                    let icon = m.type === 'Video' ? 'fa-video' : 'fa-phone';
-                    return `
-                    <div class="card" style="padding:15px; border-left: 4px solid var(--primary);">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h4 style="margin:0; font-size:1rem; font-weight:700;">${m.title}</h4>
-                            <span style="font-size:0.75rem; background:rgba(255,255,255,0.4); padding:4px 8px; border-radius:10px;">${m.type}</span>
-                        </div>
-                        <div style="font-size:0.9rem; margin-top:5px; color:#666;">
-                            With: ${m.targetName} <br>
-                            ${m.date} @ ${m.time}
-                        </div>
-                        <div style="margin-top:10px; text-align:right;">
-                            <small style="color:#888;">Scheduled by Admin</small>
-                        </div>
-                    </div>
-                `;
-                }).join('');
-            }
-        }
-
-        // --- MODAL & SETTINGS ---
-        function editEmployee(id) {
-            const emp = state.employees.find(e => e.id === id);
-            if(!emp) return;
-            document.getElementById('m-id').value = emp.id; document.getElementById('m-id').readOnly = true;
-            document.getElementById('m-name').value = emp.name; 
-            document.getElementById('m-company').value = emp.company || "";
-            document.getElementById('m-email').value = emp.mail; 
-            document.getElementById('m-mobile').value = emp.mobile;
-            document.getElementById('m-photo').value = emp.photo;
-            document.getElementById('m-pass').value = emp.pass;
-            document.getElementById('btn-save-emp').onclick = () => updateEmployee(id);
-            document.getElementById('btn-del-emp').style.display = 'block';
-            document.getElementById('modal-title').innerText = "Edit Employee";
-            const modal = document.getElementById('modal-employee');
-            modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
-        }
-
-        function showAddModal() {
-            document.getElementById('m-id').value = ""; document.getElementById('m-id').readOnly = false;
-            document.getElementById('m-name').value = ""; document.getElementById('m-company').value = "";
-            document.getElementById('m-email').value = ""; document.getElementById('m-mobile').value = "";
-            document.getElementById('m-photo').value = ""; document.getElementById('m-pass').value = "1234";
-            document.getElementById('btn-save-emp').onclick = createEmployee;
-            document.getElementById('btn-del-emp').style.display = 'none';
-            document.getElementById('modal-title').innerText = "Add Employee";
-            const modal = document.getElementById('modal-employee');
-            modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
-        }
-
-        function createEmployee() {
-            const id = document.getElementById('m-id').value.trim(); const name = document.getElementById('m-name').value.trim();
-            if(!id || !name) return toast("ID and Name required");
-            if(state.employees.find(e => e.id === id)) return toast("ID Exists");
-            state.employees.push({
-                id, name, 
-                company: document.getElementById('m-company').value,
-                mail: document.getElementById('m-email').value, 
-                mobile: document.getElementById('m-mobile').value, 
-                photo: document.getElementById('m-photo').value, 
-                pass: document.getElementById('m-pass').value
-            });
-            saveData(); closeModal('modal-employee'); loadTeam(); toast("Employee Added");
-        }
-
-        function updateEmployee(id) {
-            const idx = state.employees.findIndex(e => e.id === id);
-            if(idx > -1) {
-                state.employees[idx] = {
-                    id, name: document.getElementById('m-name').value,
-                    company: document.getElementById('m-company').value,
-                    mail: document.getElementById('m-email').value,
-                    mobile: document.getElementById('m-mobile').value,
-                    photo: document.getElementById('m-photo').value,
-                    pass: document.getElementById('m-pass').value
-                };
-                saveData(); closeModal('modal-employee'); loadTeam(); toast("Employee Updated");
-            }
-        }
-
-        function deleteEmployee() {
-            const id = document.getElementById('m-id').value;
-            if(confirm("Delete this employee?")) {
-                state.employees = state.employees.filter(e => e.id !== id);
-                saveData(); closeModal('modal-employee'); loadTeam(); toast("Deleted");
-            }
-        }
-
-        function showImportModal() {
-            const modal = document.getElementById('modal-import');
-            document.getElementById('csv-file-input').value = "";
-            modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
-        }
-
-        function downloadTemplate() {
-            const headers = "ID,Name,Company,Email,Mobile,Password,PhotoURL\n";
-            const sample = "101,John Doe,Acme Corp,john@acme.com,1234567890,1234,\n";
-            const blob = new Blob([headers + sample], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = "employee_template.csv";
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
-
-        function processCSV() {
-            const fileInput = document.getElementById('csv-file-input');
-            const file = fileInput.files[0];
-            if(!file) return toast("Select a CSV file");
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split(/\r\n|\n/);
-                if(lines.length < 2) { toast("File is empty or invalid."); return; }
-                const rawHeaders = lines[0].split(',');
-                const cleanHeaders = rawHeaders.map(h => h.replace(/"/g, '').trim().toLowerCase());
-                const map = { id: -1, name: -1, company: -1, email: -1, mobile: -1, password: -1, photo: -1 };
-                cleanHeaders.forEach((h, index) => {
-                    if(h.includes('id')) map.id = index;
-                    else if(h.includes('name')) map.name = index;
-                    else if(h.includes('company')) map.company = index;
-                    else if(h.includes('email') || h.includes('mail')) map.email = index;
-                    else if(h.includes('mobile') || h.includes('phone')) map.mobile = index;
-                    else if(h.includes('pass')) map.password = index;
-                    else if(h.includes('photo') || h.includes('image') || h.includes('url')) map.photo = index;
-                });
-                if(map.id === -1 || map.name === -1) { toast("Error: CSV must contain columns named 'ID' and 'Name'."); return; }
-                let addedCount = 0; let updatedCount = 0;
-                for(let i =1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if(!line) continue;
-                    const cols = line.split(',');
-                    const getVal = (idx) => (idx !== -1 && cols[idx]) ? cols[idx].replace(/"/g, '').trim() : "";
-                    const id = getVal(map.id);
-                    const name = getVal(map.name);
-                    if(!id || !name) continue; 
-                    const existingIndex = state.employees.findIndex(e => e.id === id);
-                    const newData = {
-                        id: id, name: name, company: getVal(map.company) || "",
-                        mail: getVal(map.email) || "", mobile: getVal(map.mobile) || "",
-                        photo: getVal(map.photo) || "", pass: getVal(map.password) || "1234"
-                    };
-                    if(existingIndex > -1) {
-                        if(!getVal(map.password)) newData.pass = state.employees[existingIndex].pass;
-                        state.employees[existingIndex] = { ...state.employees[existingIndex], ...newData };
-                        updatedCount++;
-                    } else {
-                        state.employees.push(newData);
-                        addedCount++;
-                    }
-                }
-                saveData();
-                closeModal('modal-import');
-                loadTeam();
-                let msg = `Imported ${addedCount} new employees.`;
-                if(updatedCount > 0) msg += ` Updated ${updatedCount} existing employees.`;
-                toast(msg);
-            };
-            reader.readAsText(file);
-        }
-
-        function closeModal(id) { const modal = document.getElementById(id); modal.classList.remove('open'); setTimeout(()=>modal.style.display='none',300); }
-
-        function checkPin() {
-            const modal = document.getElementById('modal-settings');
-            document.getElementById('adm-email').value = state.adminProfile.email || "";
-            document.getElementById('adm-mobile').value = state.adminProfile.mobile || "";
-            document.getElementById('adm-pass').value = "";
-            document.getElementById('adm-bin-id').value = state.cloudConfig.binId || "";
-            document.getElementById('adm-api-key').value = state.cloudConfig.masterKey || "";
-            modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
-        }
-
-        function saveAdminSettings() {
-            const newBinId = document.getElementById('adm-bin-id').value;
-            const newApiKey = document.getElementById('adm-api-key').value;
-            if(newBinId && newApiKey) {
-                state.cloudConfig.binId = newBinId;
-                state.cloudConfig.masterKey = newApiKey;
-                toast("Cloud Config Updated. All employees will sync shortly.");
-            }
-            state.adminProfile.email = document.getElementById('adm-email').value;
-            state.adminProfile.mobile = document.getElementById('adm-mobile').value;
-            const newPass = document.getElementById('adm-pass').value;
-            if(newPass) {
-                state.adminProfile.pass = newPass;
-                state.user.pass = newPass; 
-                toast("Password Updated");
-            }
-            saveData();
-            closeModal('modal-settings');
-        }
-
-        function downloadBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "eas_backup_" + new Date().toISOString().split('T')[0] + ".json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            toast("Backup Downloaded");
-        }
-
-        function forceAppUpdate() {
-            if(confirm("This will reloads app to check for updates. Continue?")) {
-                window.location.reload(true);
-            }
-        }
-
-        function loadLocalApp() {
-            const fileInput = document.getElementById('local-app-file');
-            const file = fileInput.files[0];
-            if(!file) return toast("Please select an HTML file.");
-            if(confirm("This will replace current app with selected file immediately. Unsaved changes might be lost. Continue?")) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.open();
-                    document.write(e.target.result);
-                    document.close();
-                };
-                reader.readAsText(file);
-            }
-        }
-
-        function manualSync() { const btn = document.getElementById('btn-force-sync'); btn.classList.add('syncing'); uploadToCloudFolder(); setTimeout(()=>btn.classList.remove('syncing'), 1000); }
-        function handleLocationToggle(el) { document.getElementById('loc-msg').innerText = el.checked ? "📍 Location Active" : "📍 Location Disabled"; }
-    </script>
-</body>
-</html>
+            if(target === 'ALL') { state.notifications.push
