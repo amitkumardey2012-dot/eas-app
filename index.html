@@ -21,7 +21,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v3';
+                const CACHE_NAME = 'eas-pwa-cache-v7';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -80,11 +80,12 @@
         /* --- PRINT STYLES --- */
         @media print {
             body { background: white; height: auto; display: block; overflow: visible; animation: none; }
-            #login-view, nav, header, .btn, .check-in-btn-area, .modal, #toast, .chat-container { display: none !important; }
+            #login-view, nav, header, .btn, .check-in-btn-area, .modal, #toast, .chat-container, .chat-input-area, .form-group button { display: none !important; }
             main { display: block !important; padding: 0; overflow: visible; }
-            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; color: black; background: white; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; color: black; background: white; margin-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; }
+            th, td { border: 1px solid #000; padding: 4px; text-align: left; color: black; }
+            .badge { color: white !important; border: 1px solid #000; }
         }
 
         /* --- LAYOUT --- */
@@ -152,11 +153,23 @@
         .bg-danger { background: var(--danger-grad); }
 
         /* --- CHAT ENGINE STYLES --- */
-        .chat-container { display: flex; flex-direction: column; gap: 15px; height: calc(100vh - 300px); overflow-y: auto; padding: 10px; }
+        .chat-container { display: flex; flex-direction: column; gap: 15px; min-height: calc(100vh - 380px); overflow-y: auto; padding: 10px; padding-bottom: 80px; }
         .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; word-wrap: break-word; }
         .msg-bubble.sent { align-self: flex-end; background: var(--primary-grad); color: white; border-bottom-right-radius: 4px; }
         .msg-bubble.received { align-self: flex-start; background: rgba(255,255,255,0.8); color: #333; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .msg-meta { display: block; font-size: 0.65rem; margin-top: 5px; opacity: 0.7; text-align: right; }
+
+        .chat-input-area { position: fixed; bottom: 90px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 25px; display: flex; gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px); z-index: 90; align-items: center; }
+        #emp-chat-target {
+            width: auto; max-width: 120px; 
+            border: none; background: transparent; 
+            padding: 0; margin: 0;
+            font-size: 0.9rem; font-weight: 700; color: var(--primary);
+            cursor: pointer;
+        }
+        #emp-chat-target option { color: #333; background: white; }
+        .chat-input-area input { flex: 1; border: none; background: transparent; padding: 0 10px; font-size: 0.95rem; }
+        .chat-input-area button { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
         #toast { visibility: hidden; min-width: 280px; background: rgba(45, 52, 54, 0.9); color: #fff; text-align: center; border-radius: 50px; padding: 12px 24px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); font-size: 14px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; font-weight: 500; }
         #toast.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -201,6 +214,21 @@
             display: inline-block;
             margin-top: 10px;
         }
+
+        /* REPORTS STYLES */
+        .report-summary-box {
+            display: flex; justify-content: space-around; margin-bottom: 20px;
+        }
+        .rep-stat {
+            text-align: center;
+            background: rgba(255,255,255,0.4);
+            padding: 10px;
+            border-radius: 12px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        .rep-stat h4 { margin:0; font-size:1.2rem; color:var(--secondary); }
+        .rep-stat small { font-size:0.7rem; color:#666; }
     </style>
 </head>
 <body>
@@ -221,19 +249,14 @@
             <div class="form-group"><input type="password" id="login-pass" placeholder="Password" style="text-align:center;"></div>
             <button class="btn btn-primary btn-block" onclick="login()">Login</button>
             
-            <!-- LOCAL CONFIG (Fallback) -->
             <button id="btn-login-cloud" class="btn btn-outline btn-sm" onclick="openCloudConfig()" style="width:100%; margin-top:15px;">
                 <i class="fas fa-cloud-upload-alt"></i> Local Config
             </button>
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <!-- APP VERSION -->
-            <div class="app-version-tag">
-                Version <span id="app-version-login">1.2.0</span>
-            </div>
+            <div class="app-version-tag">Version <span id="app-version-login">1.6.1</span></div>
             
-            <!-- SYNC STATUS -->
             <div style="margin-top:10px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
                  <span id="login-sync-text" style="font-size:0.7rem; color:#666;">Checking Cloud...</span>
@@ -281,7 +304,6 @@
                 <p id="loc-msg" style="color:#666; font-size:0.8rem;">📍 Location Active</p>
             </div>
 
-            <!-- LEAVE STATUS SECTION (EMPLOYEE) -->
             <div class="card">
                 <h2>My Leave Status</h2>
                 <div id="emp-leave-status-list"></div>
@@ -328,10 +350,18 @@
 
         <!-- === CHAT / MSG ENGINE (EMPLOYEE) === -->
         <main id="view-chat-emp">
-            <h2 style="font-size:1.2rem; margin-bottom:15px;">Messages from Admin</h2>
-            <div style="margin-bottom:15px; font-size:0.8rem; color:#666;">Syncs automatically every 10 seconds.</div>
-            <div id="chat-list-emp" class="chat-container">
-                <!-- Messages injected here -->
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Messages</h2>
+            <div id="chat-list-emp" class="chat-container"></div>
+            <!-- INPUT AREA WITH TARGET SELECTOR -->
+            <div class="chat-input-area">
+                <div style="display:flex; align-items:center; gap:5px; border-right:1px solid rgba(0,0,0,0.1); padding-right:10px;">
+                    <i class="fas fa-caret-down" style="color:#666; font-size:0.8rem;"></i>
+                    <select id="emp-chat-target">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <input type="text" id="emp-chat-input" placeholder="Type message..." onkeypress="handleEnterEmpChat(event)">
+                <button class="btn btn-primary" onclick="sendEmpMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </main>
 
@@ -345,17 +375,14 @@
                 <p style="font-size:0.75rem; text-align:center; color:#666; margin-top:5px;">Syncs with all devices automatically.</p>
             </div>
 
-            <!-- ONLINE USERS -->
             <div class="card">
                 <h3>Online Employees <small style="font-size:0.7rem; font-weight:400; color:#666;">(Active now)</small></h3>
-                <div id="online-users-list" style="max-height:150px; overflow-y:auto;">
-                    <div style="text-align:center; color:#999; padding:10px;">Checking...</div>
-                </div>
+                <div id="online-users-list" style="max-height:150px; overflow-y:auto;"></div>
             </div>
 
             <div class="card">
                 <h2>Overview</h2>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; text-align:center;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; text-align:center;">
                     <div class="stat-card" onclick="navTo('view-team')">
                         <div style="font-size:1.5rem; font-weight:700; color:var(--primary);" id="stat-emp">0</div>
                         <small>Employees</small>
@@ -364,25 +391,24 @@
                         <div style="font-size:1.5rem; font-weight:700; color:var(--secondary);" id="stat-pres">0</div>
                         <small>Present Today</small>
                     </div>
-                    <div class="stat-card" onclick="navTo('view-approvals')">
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--warning);" id="stat-leaves">0</div>
-                        <small>Pending Leaves</small>
-                    </div>
                 </div>
             </div>
         </main>
 
         <main id="view-checkins-adm">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                 <h2 style="font-size:1.2rem;">All Check-Ins</h2>
-                <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check-in All</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-danger btn-sm" onclick="deleteSelectedCheckins()"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+                    <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check-in All</button>
+                </div>
             </div>
             <div class="card">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <input type="date" id="ci-filter-date" onchange="loadAdminCheckins()">
                     <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
                 </div>
-                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp</th><th>Time</th><th>Loc</th><th>Status</th></tr></thead><tbody id="checkins-tbody"></tbody></table></div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th><input type="checkbox" onchange="toggleAllChecks(this)"></th><th>Emp</th><th>Time</th><th>Loc</th><th>Status</th></tr></thead><tbody id="checkins-tbody"></tbody></table></div>
             </div>
         </main>
 
@@ -414,13 +440,42 @@
 
         <!-- === APPROVALS VIEW (ADMIN) === -->
         <main id="view-approvals">
-             <h2 style="font-size:1.2rem; margin-bottom:15px;">Leave Reports</h2>
+             <h2 style="font-size:1.2rem; margin-bottom:15px;">Leave Management</h2>
              <div style="display:flex; gap:10px; margin-bottom:15px;">
                  <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('current')">This Month</button>
                  <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('previous')">Last Month</button>
                  <button class="btn btn-primary btn-sm" onclick="loadAdminApprovals()">Pending</button>
              </div>
              <div id="pending-approvals-list"></div>
+        </main>
+
+        <!-- === REPORTS VIEW (ADMIN) === -->
+        <main id="view-reports">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Reports</h2>
+            
+            <!-- Daily Report -->
+            <div class="card">
+                <h3>Daily Attendance Report</h3>
+                <div class="form-group">
+                    <label>Select Date</label>
+                    <input type="date" id="rep-date" onchange="generateDailyReport()">
+                </div>
+                <div id="daily-report-area">
+                    <p style="text-align:center; color:#666;">Select a date to view report.</p>
+                </div>
+            </div>
+
+            <!-- Monthly Report -->
+            <div class="card">
+                <h3>Monthly Summary</h3>
+                <div class="form-group">
+                    <label>Select Month</label>
+                    <input type="month" id="rep-month" onchange="generateMonthlyReport()">
+                </div>
+                <div id="monthly-report-area">
+                     <p style="text-align:center; color:#666;">Select a month to view summary.</p>
+                </div>
+            </div>
         </main>
 
         <!-- === CHAT / MSG ENGINE (ADMIN) === -->
@@ -431,22 +486,46 @@
                 <div class="form-group"><label>Target Employee</label>
                     <select id="chat-target-adm">
                         <option value="ALL">ALL EMPLOYEES</option>
-                        <!-- Populated by JS -->
                     </select>
                 </div>
                 <div class="form-group"><label>Message</label><textarea id="chat-msg-adm" rows="3" placeholder="Type your message here..."></textarea></div>
                 <button class="btn btn-primary btn-block" onclick="sendAdminMessage()">
-                    <i class="fas fa-paper-plane"></i> Send Message (In-App)
+                    <i class="fas fa-paper-plane"></i> Broadcast Message
                 </button>
-                <p style="font-size:0.75rem; color:#666; margin-top:10px; text-align:center;">
-                    *This is a free In-App message. The employee must open app to read it.
-                </p>
             </div>
 
             <h3 style="font-size:1rem; margin-bottom:10px;">Message History</h3>
-            <div id="admin-msg-history" class="chat-container">
-                <!-- History injected here -->
+            <div id="admin-msg-history" class="chat-container"></div>
+        </main>
+
+        <!-- === NEW: MEETINGS VIEW (ADMIN) === -->
+        <main id="view-meetings">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Meeting Schedule (WhatsApp)</h2>
+            
+            <div class="card">
+                <h3>Schedule Call</h3>
+                <div class="form-group"><label>Meeting Title</label><input type="text" id="meet-title" placeholder="e.g. Weekly Sync"></div>
+                <div class="form-group">
+                    <label>Target Employee</label>
+                    <select id="meet-target">
+                        <option value="">Select Employee...</option>
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group"><label>Date</label><input type="date" id="meet-date"></div>
+                    <div class="form-group"><label>Time</label><input type="time" id="meet-time"></div>
+                </div>
+                <div class="form-group"><label>Type</label>
+                    <select id="meet-type">
+                        <option value="Voice">Voice Call</option>
+                        <option value="Video">Video Call</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="scheduleMeeting()"><i class="fas fa-calendar-plus"></i> Schedule Meeting</button>
             </div>
+
+            <h3 style="font-size:1rem; margin-bottom:10px;">Scheduled Meetings</h3>
+            <div id="meetings-list"></div>
         </main>
 
         <main id="view-reminders">
@@ -473,10 +552,11 @@
 
         <nav class="bottom-nav" id="nav-adm" style="display:none;">
             <div class="nav-item active" onclick="navTo('view-dashboard', this)"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span>Dash</div>
-            <div class="nav-item" onclick="navTo('view-checkins-adm', this)"><span class="nav-icon"><i class="fas fa-clock"></i></span>Check-Ins</div>
+            <div class="nav-item" onclick="navTo('view-checkins-adm', this)"><span class="nav-icon"><i class="fas fa-clock"></i></span>In</div>
             <div class="nav-item" onclick="navTo('view-team', this)"><span class="nav-icon"><i class="fas fa-users"></i></span>Team</div>
             <div class="nav-item" onclick="navTo('view-approvals', this)"><span class="nav-icon"><i class="fas fa-user-clock"></i></span>Leaves</div>
             <div class="nav-item" onclick="navTo('view-visits-adm', this)"><span class="nav-icon"><i class="fas fa-file-invoice"></i></span>Visits</div>
+            <div class="nav-item" onclick="navTo('view-meetings', this)"><span class="nav-icon"><i class="fas fa-video"></i></span>Meets</div>
             <div class="nav-item" onclick="navTo('view-chat-adm', this)"><span class="nav-icon"><i class="fas fa-comments"></i></span>Msg</div>
             <div class="nav-item" onclick="logout()"><span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>Exit</div>
         </nav>
@@ -527,11 +607,9 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('modal-settings')">&times;</span>
             <h2>Admin Settings</h2>
-            
-            <!-- VERSION DISPLAY -->
             <div style="text-align:center; margin-bottom:20px; background:rgba(106, 17, 203, 0.1); padding:10px; border-radius:10px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.2.0</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.6.1</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -539,7 +617,6 @@
                 <button class="btn btn-success btn-block" onclick="downloadBackup()"><i class="fas fa-database"></i> Backup DB</button>
             </div>
 
-            <!-- LOCAL APP UPDATE FEATURE -->
             <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Local App Update</h3>
             <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Load a new HTML file from your device to update the app instantly (Session only).</p>
             <div class="form-group"><label>Select new index.html</label><input type="file" id="local-app-file" accept=".html"></div>
@@ -551,7 +628,7 @@
             <div class="form-group"><label>Master API Key</label><input type="password" id="adm-api-key"></div>
             
             <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Profile</h3>
-            <div class="form-group"><label>Email</label><input type="email" id="adm-email"></div>
+            <div class="form-group"><label>Email (For Notifications)</label><input type="email" id="adm-email"></div>
             <div class="form-group"><label>Mobile</label><input type="tel" id="adm-mobile"></div>
             <div class="form-group"><label>Admin Password</label><input type="password" id="adm-pass" placeholder="New Password"></div>
             
@@ -572,19 +649,16 @@
 
     <script>
         // --- CONFIGURATION ---
-        // USER PROVIDED KEYS (Defaults - User should change these in settings)
         const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
         const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
-        
-        // APP VERSION
-        const APP_VERSION = "1.2.0"; // Updated version
+        const APP_VERSION = "1.6.1"; 
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
 
-        // Default Seed Data
         const DEFAULT_EMPLOYEES = [
-            { id: "101", name: "John Doe", company: "Tech Corp", mail: "john@tech.com", mobile: "919876543210", pass: "1234", photo: "" }
+            { id: "101", name: "John Doe", company: "Tech Corp", mail: "john@tech.com", mobile: "919876543210", pass: "1234", photo: "" },
+            { id: "102", name: "Jane Smith", company: "Tech Corp", mail: "jane@tech.com", mobile: "919876543211", pass: "1234", photo: "" }
         ]; 
 
         let state = {
@@ -595,20 +669,23 @@
             visits: [],    
             notifications: [],
             messages: [],
+            meetings: [],
             adminProfile: { email: "admin@eas.com", mobile: "9999999999", pass: "admin", lockKey: "" },
-            cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, // Centralized Config
-            lastSeen: {}, // Online status tracking
-            lastModified: 0 // Initialize to 0 to force fetch from cloud on first run
+            cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
+            lastSeen: {}, 
+            lastModified: 0
         };
         
         let isJsonSync = false;
         let syncInterval = null;
         let heartbeatInterval = null;
+        let autoReminderInterval = null;
 
         const getAvatar = (name) => `https://picsum.photos/seed/${name}/200/200.jpg`;
 
+        // --- UPDATED: LOAD DATA IMMEDIATELY ---
         window.onload = () => {
-            // Set Version Display
+            // 1. Set UI Version
             if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
             if(document.getElementById('settings-version-display')) document.getElementById('settings-version-display').innerText = APP_VERSION;
 
@@ -617,16 +694,103 @@
             document.getElementById('ci-filter-date').valueAsDate = new Date();
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('rep-date').valueAsDate = new Date();
+            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             
-            // 1. Load Local Data first (if exists)
+            // 2. Load Local Data IMMEDIATELY (Do not wait for cloud)
             loadDataLocalOnly();
             
-            // 2. Check Cloud Status immediately
-            checkJsonStatus();
-            
+            // 3. CRITICAL: If local employees are empty, load defaults instantly so login works offline
+            if(state.employees.length === 0) {
+                state.employees = DEFAULT_EMPLOYEES;
+                saveDataLocalOnly(); // Save defaults to local storage
+            }
+
+            // 4. Enable UI immediately
             switchLogin('emp'); 
             requestNotificationPermission();
+
+            // 5. Check Cloud in background (with a 5 second timeout safety net)
+            checkJsonStatus(); 
         };
+
+        // --- UPDATED: ROBUST CLOUD CHECK WITH TIMEOUT ---
+        function checkJsonStatus() {
+            // Load keys
+            if(state.cloudConfig && state.cloudConfig.binId) {
+                JSONBIN_ID = state.cloudConfig.binId;
+                JSONBIN_KEY = state.cloudConfig.masterKey;
+                localStorage.setItem('j_bin_id', JSONBIN_ID);
+                localStorage.setItem('j_api_key', JSONBIN_KEY);
+            } else {
+                JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
+                JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
+            }
+
+            // If keys are default/missing, go straight to Local Mode
+            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
+                setLocalModeUI();
+                return;
+            }
+
+            // Create a timeout promise (5 seconds)
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Cloud Timeout")), 5000)
+            );
+
+            // Race between Fetch and Timeout
+            Promise.race([
+                fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } }),
+                timeoutPromise
+            ])
+            .then(res => {
+                if(!res.ok) throw new Error("Offline");
+                return res.json();
+            })
+            .then(data => {
+                isJsonSync = true;
+                document.getElementById('login-sync-dot').className = 'dot online';
+                document.getElementById('login-sync-text').innerText = "Connected";
+                document.getElementById('btn-login-cloud').style.display = 'none';
+                
+                if(data && data.record) {
+                    if(data.record.cloudConfig) {
+                        state.cloudConfig = data.record.cloudConfig;
+                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+                        JSONBIN_ID = state.cloudConfig.binId;
+                        JSONBIN_KEY = state.cloudConfig.masterKey;
+                    }
+                    // Merge cloud data if it is newer
+                    if(data.record.lastModified > state.lastModified) {
+                        mergeData(data.record);
+                        saveDataLocalOnly();
+                    } else if(state.employees.length === 0 && (!data.record.employees || data.record.employees.length === 0)) {
+                        state.employees = DEFAULT_EMPLOYEES;
+                        uploadToCloudFolder(true); 
+                    }
+                }
+                startAutoSync();
+            })
+            .catch(() => {
+                // If fetch fails or times out, fall back to Local Mode
+                setLocalModeUI();
+            });
+        }
+
+        // Helper to set UI to Local Mode
+        function setLocalModeUI() {
+            isJsonSync = false;
+            document.getElementById('login-sync-dot').className = 'dot offline';
+            document.getElementById('login-sync-text').innerText = "Local Mode (Offline)";
+            document.getElementById('btn-login-cloud').style.display = 'block';
+            
+            // Ensure we have employees to login with
+            if(state.employees.length === 0) {
+                state.employees = DEFAULT_EMPLOYEES;
+                saveDataLocalOnly();
+            }
+        }
 
         // --- SYNC ENGINE ---
         function startAutoSync() {
@@ -634,19 +798,38 @@
             if(!isJsonSync) return;
             updateSyncStatus('syncing', 'Syncing...');
             window.syncInterval = setInterval(pollCloudDatabase, 10000);
-            
-            // Start Online Heartbeat
             if(heartbeatInterval) clearInterval(heartbeatInterval);
-            heartbeatInterval = setInterval(updateHeartbeat, 120000); // Every 2 mins
+            heartbeatInterval = setInterval(updateHeartbeat, 120000); 
         }
 
         function stopAutoSync() {
             if (window.syncInterval) clearInterval(window.syncInterval);
             if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (autoReminderInterval) clearInterval(autoReminderInterval);
             if(document.getElementById('dash-sync-dot')) {
                 document.getElementById('dash-sync-dot').className = 'dot large offline';
                 document.getElementById('dash-sync-text').innerText = "Offline";
             }
+        }
+
+        // --- AUTOMATIC 5 MIN REMINDER ---
+        function startAutoReminders() {
+            if(autoReminderInterval) clearInterval(autoReminderInterval);
+            autoReminderInterval = setInterval(() => {
+                if(document.visibilityState === 'hidden') return;
+                const now = new Date();
+                const hour = now.getHours();
+                if(hour < 8 || hour > 13) return; 
+
+                const today = now.toISOString().split('T')[0];
+                if(!state.user || state.user.role !== 'emp') return;
+
+                const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+                if(!checkedIn) {
+                    sendLocalNotification("Attendance Reminder", "It's time to Check In! Please tap the Check-In button.");
+                    toast("⏰ Reminder: Please Check In!");
+                }
+            }, 300000); 
         }
 
         function updateHeartbeat() {
@@ -661,15 +844,10 @@
         function pollCloudDatabase(silent = false) {
             if(state.isSaving) return Promise.resolve();
             if(JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return Promise.resolve();
-
             return fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
-            .then(res => {
-                if(!res.ok) throw new Error("Sync Error");
-                return res.json();
-            })
+            .then(res => { if(!res.ok) throw new Error("Sync Error"); return res.json(); })
             .then(data => {
                 if(data && data.record) {
-                    // Update Config
                     if(data.record.cloudConfig) {
                         state.cloudConfig = data.record.cloudConfig;
                         localStorage.setItem('j_bin_id', state.cloudConfig.binId);
@@ -677,8 +855,6 @@
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
-
-                    // ONLY MERGE IF CLOUD IS NEWER
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly(); 
@@ -689,137 +865,38 @@
                     }
                 }
             })
-            .catch(() => {
-                if(!silent) updateSyncStatus('offline', 'Local Mode');
-            });
+            .catch(() => { if(!silent) updateSyncStatus('offline', 'Local Mode'); });
         }
 
-        // --- CRITICAL FIX: OPTIMISTIC LOCKING ---
         function uploadToCloudFolder(silent = false) {
             if(!isJsonSync || JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return;
-
-            // Step 1: Fetch absolute latest data from Cloud to check for conflicts
             fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
-            .then(res => {
-                if(!res.ok) throw new Error("Pre-check failed");
-                return res.json();
-            })
+            .then(res => { if(!res.ok) throw new Error("Pre-check failed"); return res.json(); })
             .then(cloudData => {
                 if(cloudData && cloudData.record) {
-                    // CONFLICT CHECK:
-                    // If Cloud version is newer than what this device currently has,
-                    // DO NOT UPLOAD. Instead, merge the cloud data down and abort.
                     if(cloudData.record.lastModified > state.lastModified) {
-                        console.warn("Sync Conflict Detected: Cloud has newer data. Aborting upload to prevent data loss.");
+                        console.warn("Sync Conflict Detected");
                         mergeData(cloudData.record);
                         saveDataLocalOnly();
                         if(!silent) {
-                            alert("⚠️ Sync Conflict Detected: Another device has updated data recently. Your changes were NOT saved. The latest data has been loaded.");
+                            alert("⚠️ Sync Conflict: Another device updated data. Loading latest version.");
                             refreshCurrentView();
                         }
-                        return; // Stop upload process
+                        return; 
                     }
                 }
-
-                // Step 2: If no conflict, proceed with upload
                 state.isSaving = true;
                 state.lastModified = Date.now();
-                
                 fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
                     body: JSON.stringify(state)
                 })
-                .then(() => { 
-                    if(!silent) updateSyncStatus('online', 'Saved'); 
-                })
-                .catch(err => {
-                    console.error("Upload failed", err);
-                    if(!silent) toast("Sync failed (Network Error)");
-                })
-                .finally(() => { 
-                    state.isSaving = false; 
-                });
+                .then(() => { if(!silent) updateSyncStatus('online', 'Saved'); })
+                .catch(err => { console.error(err); if(!silent) toast("Sync failed"); })
+                .finally(() => { state.isSaving = false; });
             })
-            .catch(err => {
-                console.error("Pre-check network error", err);
-                // Fallback: If we can't check, maybe try to upload blindly? 
-                // Better to be safe: tell user offline.
-                if(!silent) toast("Cannot verify cloud status. Changes saved locally only.");
-            });
-        }
-
-        function checkJsonStatus() {
-            if(state.cloudConfig && state.cloudConfig.binId) {
-                JSONBIN_ID = state.cloudConfig.binId;
-                JSONBIN_KEY = state.cloudConfig.masterKey;
-                localStorage.setItem('j_bin_id', JSONBIN_ID);
-                localStorage.setItem('j_api_key', JSONBIN_KEY);
-            } else {
-                JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
-                JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
-            }
-
-            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
-                isJsonSync = false;
-                document.getElementById('login-sync-dot').className = 'dot offline';
-                document.getElementById('login-sync-text').innerText = "Local Mode";
-                document.getElementById('btn-login-cloud').style.display = 'block';
-                document.getElementById('btn-login-cloud').classList.add('btn-danger');
-                
-                // ONLY APPLY DEFAULTS IF LOCAL STORAGE IS ALSO EMPTY
-                if(state.employees.length === 0) {
-                   state.employees = DEFAULT_EMPLOYEES;
-                   saveDataLocalOnly();
-                }
-                return;
-            }
-
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
-            .then(res => {
-                if(!res.ok) throw new Error("Offline");
-                return res.json();
-            })
-            .then(data => {
-                isJsonSync = true;
-                document.getElementById('login-sync-dot').className = 'dot online';
-                document.getElementById('login-sync-text').innerText = "Connected";
-                document.getElementById('btn-login-cloud').style.display = 'none';
-                
-                if(data && data.record) {
-                    // Sync Config
-                    if(data.record.cloudConfig) {
-                        state.cloudConfig = data.record.cloudConfig;
-                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
-                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
-                        JSONBIN_ID = state.cloudConfig.binId;
-                        JSONBIN_KEY = state.cloudConfig.masterKey;
-                    }
-
-                    // Prioritize Cloud Data over Local Data to avoid reverts
-                    if(data.record.lastModified > state.lastModified) {
-                        mergeData(data.record);
-                        saveDataLocalOnly();
-                    } else if(state.employees.length === 0 && (!data.record.employees || data.record.employees.length === 0)) {
-                        // Both Local and Cloud are empty, init with defaults ONLY here
-                        state.employees = DEFAULT_EMPLOYEES;
-                        uploadToCloudFolder(true); // Seed the cloud
-                    }
-                }
-                startAutoSync();
-            })
-            .catch(() => {
-                isJsonSync = false;
-                document.getElementById('login-sync-dot').className = 'dot offline';
-                document.getElementById('login-sync-text').innerText = "Local Mode";
-                document.getElementById('btn-login-cloud').style.display = 'block';
-                
-                // If Cloud failed but we have local data, keep local. If local is empty, keep defaults.
-                if(state.employees.length === 0) {
-                    state.employees = DEFAULT_EMPLOYEES;
-                    saveDataLocalOnly();
-                }
-            });
+            .catch(err => { if(!silent) toast("Cannot verify cloud status. Saved locally only."); });
         }
 
         function mergeData(cloud) {
@@ -829,12 +906,12 @@
             if(cloud.visits) state.visits = cloud.visits;
             if(cloud.notifications) state.notifications = cloud.notifications;
             if(cloud.messages) state.messages = cloud.messages;
+            if(cloud.meetings) state.meetings = cloud.meetings || [];
             if(cloud.adminProfile) state.adminProfile = cloud.adminProfile;
             if(cloud.lastSeen) state.lastSeen = cloud.lastSeen;
             state.lastModified = cloud.lastModified;
         }
 
-        // --- DATA LOGIC ---
         function loadDataLocalOnly() {
             const data = localStorage.getItem('eas_pro_db_v1');
             if(data) {
@@ -846,21 +923,17 @@
                     state.visits = parsed.visits || [];
                     state.notifications = parsed.notifications || [];
                     state.messages = parsed.messages || [];
+                    state.meetings = parsed.meetings || [];
                     state.adminProfile = parsed.adminProfile || state.adminProfile;
                     state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
                     state.lastSeen = parsed.lastSeen || {};
                     state.lastModified = parsed.lastModified || 0;
                 } catch (e) {
-                    console.error("Local data corrupted, resetting", e);
-                    // Corrupt data might crash the app, so we ignore it here
-                    // and let checkJsonStatus() handle the defaults.
-                    state.employees = [];
-                    state.lastModified = 0;
+                    console.error("Local data corrupted", e);
+                    state.employees = []; state.lastModified = 0;
                 }
             } else {
-                // Do NOT load defaults here. Wait for Cloud check.
-                state.employees = []; 
-                state.lastModified = 0;
+                state.employees = []; state.lastModified = 0;
             }
         }
 
@@ -883,14 +956,18 @@
             if(id === 'view-visits-adm') loadAdminVisits();
             if(id === 'view-history') loadHistory();
             if(id === 'view-notifications') loadNotifications();
-            if(id === 'view-home') {
-                checkStatus();
-                loadEmpLeaveStatus(); 
-                checkUnreadNotifications(); 
-            }
-            if(id === 'view-chat-emp') loadEmpChat();
+            if(id === 'view-home') { checkStatus(); loadEmpLeaveStatus(); checkUnreadNotifications(); }
+            if(id === 'view-chat-emp') { loadEmpChatTargets(); loadEmpChat(); }
             if(id === 'view-chat-adm') loadAdminChatHistory();
             if(id === 'view-approvals') loadAdminApprovals();
+            if(id === 'view-reports') { 
+                if(document.getElementById('rep-date').value) generateDailyReport();
+                if(document.getElementById('rep-month').value) generateMonthlyReport();
+            }
+            if(id === 'view-meetings') {
+                loadMeetingsList();
+                loadMeetingTargetOptions();
+            }
         }
 
         // --- APP LOGIC ---
@@ -900,30 +977,19 @@
             document.getElementById('login-id').value = '';
             document.getElementById('login-id').placeholder = role==='emp' ? "Emp ID" : "Admin";
             document.getElementById('login-pass').value = '';
-            
             const hintEl = document.getElementById('login-hint');
             const cloudBtn = document.getElementById('btn-login-cloud');
-            
             cloudBtn.style.display = 'block'; 
-
-            if(role === 'emp') {
-                hintEl.innerText = 'Default Pass: 1234';
-            } else {
-                hintEl.innerText = ''; 
-            }
+            if(role === 'emp') { hintEl.innerText = 'Default Pass: 1234'; }
+            else { hintEl.innerText = ''; }
         }
 
         function login() {
             const id = document.getElementById('login-id').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if(!id || !pass) return toast("Fill all fields");
-
             const role = document.querySelector('.tab.active').id === 'tab-emp' ? 'emp' : 'adm';
-            
-            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
-                toast("Note: Running in Local Mode (No Cloud Sync)");
-            }
-
+            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") { toast("Note: Running in Local Mode"); }
             if(role === 'emp') {
                 const emp = state.employees.find(e => e.id === id);
                 if(emp && (emp.pass === pass || pass === '1234')) {
@@ -954,8 +1020,7 @@
             loadEmpLeaveStatus();
             navTo('view-home');
             updateHeartbeat(); 
-            setInterval(checkReminders, 60000 * 5); 
-            checkReminders(); 
+            startAutoReminders(); // Start 5 min reminder
         }
 
         function initAdmin() {
@@ -984,7 +1049,7 @@
             const titles = {
                 'view-home': 'Home', 'view-visits-emp': 'Visits', 'view-history': 'History', 'view-notifications': 'Alerts',
                 'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'Reminders',
-                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Reports'
+                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Mgmt', 'view-reports': 'Reports', 'view-meetings': 'Meetings'
             };
             document.getElementById('page-title').innerText = titles[id];
             refreshCurrentView();
@@ -1037,17 +1102,6 @@
             }
         }
 
-        function checkReminders() {
-            if(state.user.role !== 'emp') return;
-            const now = new Date();
-            const hour = now.getHours();
-            const today = now.toISOString().split('T')[0];
-            const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
-            if(hour === 10 && !checkedIn) {
-                sendLocalNotification("Attendance Reminder", "Please Check In before 11 AM!");
-            }
-        }
-
         function sendLocalNotification(title, body) {
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/2919/2919600.png" });
@@ -1059,12 +1113,18 @@
             const btn = document.getElementById('btn-checkin');
             if(btn.classList.contains('checked-in') || btn.classList.contains('on-leave')) return;
             
+            const today = new Date().toISOString().split('T')[0];
+            const alreadyCheckedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+            if(alreadyCheckedIn) {
+                return toast("Already checked in today!");
+            }
+
             const process = (lat, lng) => {
                 const now = new Date();
                 state.attendance.push({
                     eid: state.user.id,
                     name: state.user.name,
-                    date: now.toISOString().split('T')[0],
+                    date: today,
                     time: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                     lat: lat, lng: lng,
                     status: 'Present'
@@ -1082,7 +1142,6 @@
             const today = new Date().toISOString().split('T')[0];
             const rec = state.attendance.find(a => a.eid === state.user.id && a.date === today);
             const btn = document.getElementById('btn-checkin');
-            
             if(rec) {
                 if(rec.status === 'Leave') {
                     btn.classList.add('on-leave');
@@ -1106,15 +1165,22 @@
         function applyLeave() {
             const f = document.getElementById('l-from').value; const t = document.getElementById('l-to').value; const r = document.getElementById('l-reason').value;
             if(!f || !t || !r) return toast("Fill details");
-            state.leaves.push({ id: Date.now(), eid: state.user.id, name: state.user.name, from: f, to: t, reason: r, status: 'Pending' });
-            saveData(); toast("Leave Applied");
+            const leaveId = Date.now();
+            state.leaves.push({ id: leaveId, eid: state.user.id, name: state.user.name, from: f, to: t, reason: r, status: 'Pending' });
+            if(state.adminProfile.email) {
+                const subject = encodeURIComponent(`Leave Request: ${state.user.name} (${f} to ${t})`);
+                const body = encodeURIComponent(`Employee ID: ${state.user.id}\nName: ${state.user.name}\nDates: ${f} to ${t}\nReason: ${r}\n\nPlease approve/reject via the EAS App.`);
+                window.open(`mailto:${state.adminProfile.email}?subject=${subject}&body=${body}`, '_blank');
+            } else {
+                toast("Leave Applied (Admin Email not set)");
+            }
+            saveData(); 
             loadEmpLeaveStatus();
         }
 
         function loadEmpLeaveStatus() {
             const list = document.getElementById('emp-leave-status-list');
             const myLeaves = state.leaves.filter(l => l.eid === state.user.id).reverse();
-            
             if(myLeaves.length === 0) {
                 list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem;'>No leave requests found.</p>";
             } else {
@@ -1122,7 +1188,6 @@
                     let badgeColor = 'bg-warning';
                     if(l.status === 'Approved') badgeColor = 'bg-present';
                     if(l.status === 'Rejected') badgeColor = 'bg-danger';
-
                     return `
                     <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.4); padding:10px; border-radius:10px; margin-bottom:8px;">
                         <div>
@@ -1162,7 +1227,6 @@
             const monthVal = document.getElementById('hist-month').value;
             const tbody = document.getElementById('history-tbody');
             const myAtt = state.attendance.filter(a => a.eid === state.user.id && a.date.startsWith(monthVal));
-            
             if(myAtt.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='3' style='text-align:center'>No records</td></tr>";
             } else {
@@ -1185,21 +1249,19 @@
         function loadAdminApprovals() {
             const list = document.getElementById('pending-approvals-list');
             const requests = state.leaves.filter(l => l.status === 'Pending');
-
             if(requests.length === 0) {
                 list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No pending leave requests.</p>";
                 return;
             }
-
             list.innerHTML = requests.map(r => `
                 <div class="card" style="padding:15px; border-left: 5px solid var(--warning);">
                     <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                         <h3 style="margin:0; font-size:1rem;">${r.name}</h3>
-                        <small style="color:#666;">ID: ${r.eid}</small>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-sm btn-danger" onclick="deleteLeave(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
-                    <div style="margin-bottom:5px; font-weight:600; color:var(--primary);">
-                        ${r.from} to ${r.to}
-                    </div>
+                    <div style="margin-bottom:5px; font-weight:600; color:var(--primary);">${r.from} to ${r.to}</div>
                     <p style="margin:0 0 10px 0; font-size:0.9rem; color:#555; font-style:italic;">"${r.reason}"</p>
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-success btn-sm" onclick="processLeave(${r.id}, 'Approved')">Approve</button>
@@ -1209,11 +1271,19 @@
             `).join('');
         }
 
+        function deleteLeave(id) {
+            if(confirm("Are you sure you want to delete this leave request?")) {
+                state.leaves = state.leaves.filter(l => l.id !== id);
+                saveData();
+                loadAdminApprovals();
+                toast("Leave request deleted");
+            }
+        }
+
         function loadLeaveReports(type) {
             const list = document.getElementById('pending-approvals-list');
             const now = new Date();
             let startMonth, endMonth;
-
             if(type === 'current') {
                 startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
                 endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -1221,16 +1291,11 @@
                 startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
                 endMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
             }
-
-            const reports = state.leaves.filter(l => {
-                return (l.from <= endMonth && l.to >= startMonth);
-            });
-
+            const reports = state.leaves.filter(l => { return (l.from <= endMonth && l.to >= startMonth); });
             if(reports.length === 0) {
                 list.innerHTML = `<p style='text-align:center; color:#999; padding:20px;'>No leaves found for ${type === 'current' ? 'this' : 'last'} month.</p>`;
                 return;
             }
-
             list.innerHTML = reports.map(r => `
                 <div class="card" style="padding:10px; margin-bottom:10px;">
                     <div style="font-weight:bold;">${r.name}</div>
@@ -1251,16 +1316,11 @@
         }
 
         function processLeave(id, status) {
-            if(status === 'Rejected') {
-                if(!confirm(`Are you sure you want to Reject this leave request?`)) return;
-            }
-
+            if(status === 'Rejected') { if(!confirm(`Are you sure you want to Reject this leave request?`)) return; }
             const idx = state.leaves.findIndex(l => l.id === id);
             if(idx > -1) {
                 const leave = state.leaves[idx];
-                
                 state.leaves[idx].status = status;
-                
                 state.notifications.push({
                     id: Date.now(),
                     target: state.leaves[idx].eid,
@@ -1268,20 +1328,16 @@
                     date: new Date().toLocaleString(),
                     read: false
                 });
-
                 if(status === 'Approved') {
                     const employee = state.employees.find(e => e.id === leave.eid);
-                    
                     if(employee && employee.mail) {
                         const subject = encodeURIComponent(`Leave Approved: ${leave.from} to ${leave.to}`);
                         const body = encodeURIComponent(`Hello ${employee.name},\n\nYour leave request has been approved.\n\nDates: ${leave.from} to ${leave.to}\nReason: ${leave.reason}\n\nRegards,\nAdmin`);
                         window.open(`mailto:${employee.mail}?subject=${subject}&body=${body}`, '_blank');
                     }
-
                     const start = new Date(leave.from);
                     const end = new Date(leave.to);
                     const leaveDates = getDatesInRange(start, end);
-                    
                     leaveDates.forEach(dateStr => {
                         state.attendance = state.attendance.filter(a => !(a.eid === leave.eid && a.date === dateStr));
                         state.attendance.push({
@@ -1295,12 +1351,96 @@
                         });
                     });
                 }
-
                 saveData();
                 loadAdminApprovals(); 
                 loadDash();
                 toast(status === 'Approved' ? "Approved & Email Sent" : "Request Rejected");
             }
+        }
+
+        // --- REPORTS LOGIC ---
+        function generateDailyReport() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return;
+            const area = document.getElementById('daily-report-area');
+            
+            let presentCount = 0;
+            let absentCount = 0;
+            let leaveCount = 0;
+            let rows = '';
+
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { presentCount++; statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { leaveCount++; statusBadge = 'bg-warning'; }
+                } else {
+                    absentCount++;
+                }
+
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${emp.id}</td>
+                    <td><span class="badge ${statusBadge}">${status}</span></td>
+                    <td>${att ? att.time : '-'}</td>
+                </tr>`;
+            });
+
+            area.innerHTML = `
+                <div class="report-summary-box">
+                    <div class="rep-stat"><h4>${presentCount}</h4><small>Present</small></div>
+                    <div class="rep-stat"><h4>${absentCount}</h4><small>Abs</small></div>
+                    <div class="rep-stat"><h4>${leaveCount}</h4><small>Leave</small></div>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
+        }
+
+        function generateMonthlyReport() {
+            const monthVal = document.getElementById('rep-month').value; // YYYY-MM
+            if(!monthVal) return;
+            const area = document.getElementById('monthly-report-area');
+            const [year, month] = monthVal.split('-').map(Number);
+            
+            // Get days in month
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            let rows = '';
+
+            state.employees.forEach(emp => {
+                // Calculate stats for this employee
+                let p = 0, l = 0, a = 0;
+                
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${p}</td>
+                    <td>${l}</td>
+                    <td>${a}</td>
+                    <td>${p+l+a}</td>
+                </tr>`;
+            });
+
+            area.innerHTML = `
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
         }
 
         // --- CHAT ENGINE ---
@@ -1324,38 +1464,100 @@
 
         function loadAdminChatHistory() {
             const list = document.getElementById('admin-msg-history');
-            const msgs = state.messages.slice().reverse();
+            const msgs = state.messages.filter(m => m.sender === 'Admin' || m.target === 'admin').slice().reverse();
             if(msgs.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999;'>No messages sent yet.</p>";
+                list.innerHTML = "<p style='text-align:center; color:#999;'>No messages yet.</p>";
                 return;
             }
-            list.innerHTML = msgs.map(m => `
-                <div class="card" style="padding:10px; margin-bottom:10px; border-left:3px solid var(--primary);">
-                    <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">
-                        To: <b>${m.target}</b> • ${m.timestamp}
+            list.innerHTML = msgs.map(m => {
+                const isMine = m.sender === 'Admin';
+                return `
+                <div class="msg-bubble ${isMine ? 'sent' : 'received'}">
+                    <div style="font-size:0.75rem; font-weight:700; margin-bottom:2px; opacity:0.8;">
+                        ${isMine ? 'To: '+m.target : 'From: '+m.senderName}
                     </div>
-                    <div style="font-weight:600;">${m.content}</div>
-                </div>
-            `).join('');
+                    ${m.content}
+                    <span class="msg-meta">${m.timestamp}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // --- NEW: EMPLOYEE INTERACTION FUNCTIONS ---
+        function loadEmpChatTargets() {
+            const select = document.getElementById('emp-chat-target');
+            if(!select) return;
+            let html = `<option value="admin">To: Admin</option>`;
+            state.employees.forEach(e => {
+                if(e.id !== state.user.id) {
+                    html += `<option value="${e.id}">To: ${e.name}</option>`;
+                }
+            });
+            select.innerHTML = html;
+        }
+
+        function sendEmpMessage() {
+            const target = document.getElementById('emp-chat-target').value;
+            const msg = document.getElementById('emp-chat-input').value.trim();
+            if(!msg) return toast("Type a message");
+            
+            state.messages.push({
+                id: Date.now(),
+                sender: state.user.id,
+                senderName: state.user.name,
+                target: target,
+                content: msg,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            saveData();
+            document.getElementById('emp-chat-input').value = "";
+            loadEmpChat();
+            toast("Message Sent");
+        }
+
+        function handleEnterEmpChat(e) {
+            if(e.key === 'Enter') sendEmpMessage();
         }
 
         function loadEmpChat() {
             const list = document.getElementById('chat-list-emp');
-            const myMsgs = state.messages.filter(m => m.target === 'ALL' || m.target === state.user.id).reverse();
+            // Filter messages relevant to the current user:
+            // 1. Broadcasts (target = ALL)
+            // 2. Sent to me (target = myID)
+            // 3. Sent by me (sender = myID) - shows messages to Admin AND messages to colleagues
+            const myMsgs = state.messages.filter(m => 
+                m.target === 'ALL' || 
+                m.target === state.user.id || 
+                m.sender === state.user.id
+            ).reverse();
+            
             if(myMsgs.length === 0) {
-                list.innerHTML = "<div style='text-align:center; color:#999; margin-top:20px;'>No new messages.</div>";
+                list.innerHTML = "<div style='text-align:center; color:#999; margin-top:20px;'>No messages yet.</div>";
             } else {
-                list.innerHTML = myMsgs.map(m => `
-                    <div class="msg-bubble received">
+                list.innerHTML = myMsgs.map(m => {
+                    const isMine = m.sender === state.user.id;
+                    // Determine label for the bubble
+                    let label = isMine ? 'You' : m.senderName;
+                    if(m.target === 'ALL') label = `${m.senderName} (All)`;
+                    
+                    return `
+                    <div class="msg-bubble ${isMine ? 'sent' : 'received'}">
+                        <div style="font-size:0.75rem; font-weight:700; margin-bottom:2px; opacity:0.8;">
+                            ${label}
+                        </div>
                         ${m.content}
-                        <span class="msg-meta">${m.senderName} • ${m.timestamp}</span>
-                    </div>
-                `).join('');
+                        <span class="msg-meta">${m.timestamp}</span>
+                    </div>`;
+                }).join('');
             }
         }
 
         function checkUnreadMessages() {
-            const unreadCount = state.messages.filter(m => m.target === 'ALL' || m.target === state.user.id).length;
+            // Count messages NOT sent by me, AND (target is me OR target is ALL)
+            const unreadCount = state.messages.filter(m => 
+                m.sender !== state.user.id && 
+                (m.target === 'ALL' || m.target === state.user.id)
+            ).length;
             const badge = document.getElementById('emp-chat-badge');
             if(unreadCount > 0) { badge.innerText = unreadCount; badge.classList.add('show'); }
             else { badge.classList.remove('show'); }
@@ -1366,28 +1568,21 @@
             document.getElementById('stat-emp').innerText = state.employees.length;
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('stat-pres').innerText = state.attendance.filter(a => a.date === today && a.status !== 'Leave').length;
-            
-            const pendingLeaves = state.leaves.filter(l => l.status === 'Pending').length;
-            document.getElementById('stat-leaves').innerText = pendingLeaves;
-
             const targetSelect = document.getElementById('chat-target-adm');
             let opts = `<option value="ALL">ALL EMPLOYEES</option>`;
             state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
             targetSelect.innerHTML = opts;
-
             loadOnlineUsers();
         }
 
         function loadOnlineUsers() {
             const list = document.getElementById('online-users-list');
             const now = Date.now();
-            const onlineThreshold = 5 * 60 * 1000; // 5 minutes
-
+            const onlineThreshold = 5 * 60 * 1000; 
             const onlineEmployees = state.employees.filter(e => {
                 const lastSeen = state.lastSeen[e.id];
                 return lastSeen && (now - lastSeen < onlineThreshold);
             });
-
             if(onlineEmployees.length === 0) {
                 list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem; padding:10px;'>No employees currently online.</p>";
             } else {
@@ -1404,9 +1599,10 @@
             const filterDate = document.getElementById('ci-filter-date').value;
             const tbody = document.getElementById('checkins-tbody');
             const data = state.attendance.filter(a => a.date === filterDate);
-            if(data.length === 0) tbody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No check-ins</td></tr>";
+            if(data.length === 0) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No check-ins</td></tr>";
             else tbody.innerHTML = data.map(a => `
                 <tr>
+                    <td><input type="checkbox" class="chk-ci" value="${a.date}_${a.eid}"></td>
                     <td><b>${a.name}</b></td>
                     <td>${a.time}</td>
                     <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:blue;">Map</a>`}</td>
@@ -1415,11 +1611,28 @@
             `).join('');
         }
 
+        function deleteSelectedCheckins() {
+            const checkboxes = document.querySelectorAll('.chk-ci:checked');
+            if(checkboxes.length === 0) return toast("Select entries to delete");
+            if(!confirm(`Delete ${checkboxes.length} selected entries?`)) return;
+            const toDelete = Array.from(checkboxes).map(cb => cb.value.split('_')); 
+            state.attendance = state.attendance.filter(a => {
+                return !toDelete.some(d => d[0] === a.date && d[1] === a.eid);
+            });
+            saveData();
+            loadAdminCheckins();
+            toast("Deleted successfully");
+        }
+
+        function toggleAllChecks(source) {
+            const checkboxes = document.querySelectorAll('.chk-ci');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
         function proxyCheckInAll() {
             if(!confirm("Check in ALL employees for today?")) return;
             const today = new Date().toISOString().split('T')[0];
             const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            
             let count = 0;
             state.employees.forEach(emp => {
                 const exists = state.attendance.find(a => a.eid === emp.id && a.date === today);
@@ -1440,30 +1653,12 @@
             toast(`Checked in ${count} employees.`);
         }
 
-        function performProxyCheckIn(eid, ename) {
-            if(confirm(`Manually check-in ${ename}?`)) {
-                const now = new Date();
-                state.attendance.push({
-                    eid: eid,
-                    name: ename,
-                    date: now.toISOString().split('T')[0],
-                    time: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                    lat: "Admin", lng: "Proxy",
-                    status: 'Present'
-                });
-                saveData();
-                loadAdminCheckins();
-                toast(`${ename} Checked In`);
-            }
-        }
-
         function loadTeam() {
             const list = document.getElementById('team-list');
             const targetSelect = document.getElementById('rem-target');
             let opts = `<option value="ALL">ALL Employees</option>`;
             state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
             targetSelect.innerHTML = opts;
-
             list.innerHTML = state.employees.map(e => `
                 <div class="list-item">
                     <div class="user-info">
@@ -1585,7 +1780,7 @@
         }
         
         function deleteAllEmployees() {
-            if(confirm("CONFIRM: This will PERMANENTLY DELETE all employee data from Local Database AND Cloud Storage. Attendance history will be kept. Continue?")) {
+            if(confirm("CONFIRM: This will PERMANENTLY DELETE all employee data. Continue?")) {
                 state.employees = [];
                 saveData(); 
                 loadTeam();
@@ -1641,6 +1836,88 @@
             loadNotifications();
             checkUnreadNotifications();
             toast("All marked read");
+        }
+
+        // --- MEETING SCHEDULER LOGIC ---
+        function loadMeetingTargetOptions() {
+            const select = document.getElementById('meet-target');
+            let html = `<option value="">Select Employee...</option>`;
+            state.employees.forEach(e => {
+                html += `<option value="${e.id}">${e.name} (${e.id})</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function scheduleMeeting() {
+            const target = document.getElementById('meet-target').value;
+            const title = document.getElementById('meet-title').value;
+            const date = document.getElementById('meet-date').value;
+            const time = document.getElementById('meet-time').value;
+            const type = document.getElementById('meet-type').value;
+
+            if(!target || !title || !date || !time) return toast("Please fill all fields");
+
+            const employee = state.employees.find(e => e.id === target);
+            if(!employee) return toast("Employee not found");
+
+            // 1. Save to internal Meeting List
+            state.meetings.push({
+                id: Date.now(),
+                title, date, time, type, target, targetName: employee.name
+            });
+
+            // 2. Send Notification to Employee
+            state.notifications.push({
+                id: Date.now(),
+                target: target,
+                message: `Meeting Scheduled: ${title} (${type}) on ${date} at ${time}. Please be available on WhatsApp.`,
+                date: new Date().toLocaleString(),
+                read: false
+            });
+
+            // 3. Send WhatsApp Link to Admin
+            if(employee.mobile) {
+                let cleanMobile = employee.mobile.replace(/[^0-9]/g, '');
+                const textBody = encodeURIComponent(`Hello ${employee.name},\n\nI have scheduled a ${type} with you for: ${title} on ${date} at ${time}.\n\nPlease join via WhatsApp.`);
+                const url = `https://wa.me/${cleanMobile}?text=${textBody}`;
+                window.open(url, '_blank');
+            } else {
+                toast("Meeting saved (No mobile number for WA)");
+            }
+
+            saveData();
+            loadMeetingsList();
+            toast("Meeting Scheduled & Notification Sent");
+            // Clear Form
+            document.getElementById('meet-title').value = "";
+            document.getElementById('meet-target').value = "";
+        }
+
+        function loadMeetingsList() {
+            const list = document = document.getElementById('meetings-list');
+            const myMeets = state.meetings.slice().reverse();
+            if(myMeets.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999;'>No meetings scheduled.</p>";
+            } else {
+                list.innerHTML = myMeets.map(m => {
+                    let icon = m.type === 'Video' ? 'fa-video' : 'fa-phone';
+                    return `
+                    <div class="card" style="padding:15px; border-left: 4px solid var(--primary);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h4 style="margin:0; font-size:1rem; font-weight:700;">${m.title}</h4>
+                            <span style="font-size:0.75rem; background:rgba(255,255,255,0.4); padding:4px 8px; border-radius:10px;">${m.type}</span>
+                        </div>
+                        <div style="font-size:0.9rem; margin-top:5px; color:#666;">
+                            With: ${m.targetName} <br>
+                            ${m.date} @ ${m.time}
+                        </div>
+                        <div style="margin-top:10px; text-align:right;">
+                            <small style="color:#888;">Scheduled by Admin</small>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
         }
 
         // --- MODAL & SETTINGS ---
@@ -1749,10 +2026,7 @@
                     else if(h.includes('photo') || h.includes('image') || h.includes('url')) map.photo = index;
                 });
                 if(map.id === -1 || map.name === -1) { toast("Error: CSV must contain columns named 'ID' and 'Name'."); return; }
-
-                let addedCount = 0;
-                let updatedCount = 0;
-
+                let addedCount = 0; let updatedCount = 0;
                 for(let i =1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if(!line) continue;
@@ -1761,14 +2035,12 @@
                     const id = getVal(map.id);
                     const name = getVal(map.name);
                     if(!id || !name) continue; 
-
                     const existingIndex = state.employees.findIndex(e => e.id === id);
                     const newData = {
                         id: id, name: name, company: getVal(map.company) || "",
                         mail: getVal(map.email) || "", mobile: getVal(map.mobile) || "",
                         photo: getVal(map.photo) || "", pass: getVal(map.password) || "1234"
                     };
-
                     if(existingIndex > -1) {
                         if(!getVal(map.password)) newData.pass = state.employees[existingIndex].pass;
                         state.employees[existingIndex] = { ...state.employees[existingIndex], ...newData };
@@ -1808,7 +2080,6 @@
                 state.cloudConfig.masterKey = newApiKey;
                 toast("Cloud Config Updated. All employees will sync shortly.");
             }
-
             state.adminProfile.email = document.getElementById('adm-email').value;
             state.adminProfile.mobile = document.getElementById('adm-mobile').value;
             const newPass = document.getElementById('adm-pass').value;
@@ -1817,7 +2088,6 @@
                 state.user.pass = newPass; 
                 toast("Password Updated");
             }
-            
             saveData();
             closeModal('modal-settings');
         }
@@ -1843,7 +2113,6 @@
             const fileInput = document.getElementById('local-app-file');
             const file = fileInput.files[0];
             if(!file) return toast("Please select an HTML file.");
-
             if(confirm("This will replace current app with selected file immediately. Unsaved changes might be lost. Continue?")) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
