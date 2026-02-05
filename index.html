@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#e73c7e">
+    <meta name="theme-color" content="#6a11cb">
     <title>Employee Attendance System (EAS)</title>
     
     <!-- PWA / MOBILE APP CAPABILITIES -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="EAS">
+    <meta name="description" content="Professional Attendance & Leave Management System">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -20,7 +21,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v1';
+                const CACHE_NAME = 'eas-pwa-cache-v3';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -33,7 +34,7 @@
                 });
             `;
             const blob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(e => console.log('SW Fail:', e));
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(e => console.log('SW registration failed:', e));
         }
     </script>
     
@@ -51,10 +52,12 @@
             --warning: #f7971e;
             --text-main: #2d3436;
             --text-light: #636e72;
-            --glass: rgba(255, 255, 255, 0.4); 
+            --glass: rgba(255, 255, 255, 0.65); 
+            --glass-border: rgba(255, 255, 255, 0.5);
             --shadow: 0 10px 30px rgba(0,0,0,0.1);
             --radius: 20px;
             --font-family: 'Outfit', sans-serif;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
@@ -74,19 +77,29 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(86, 171, 47, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(86, 171, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(86, 171, 47, 0); } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { background: white; height: auto; display: block; overflow: visible; animation: none; }
+            #login-view, nav, header, .btn, .check-in-btn-area, .modal, #toast, .chat-container { display: none !important; }
+            main { display: block !important; padding: 0; overflow: visible; }
+            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; color: black; background: white; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        }
+
         /* --- LAYOUT --- */
         #app-container { display: none; height: 100%; flex-direction: column; width: 100%; position: relative; }
         
         header {
-            background: rgba(255, 255, 255, 0.5); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.3); z-index: 100; backdrop-filter: blur(20px); position: sticky; top: 0; touch-action: manipulation;
+            background: var(--glass); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border); z-index: 100; backdrop-filter: blur(20px); position: sticky; top: 0; touch-action: manipulation;
         }
         header h1 { margin: 0; font-size: 1.2rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; letter-spacing: -0.5px; flex: 1; }
         
         main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; display: none; animation: fadeIn 0.4s ease; scroll-behavior: smooth; scrollbar-width: none; }
         main.active { display: block; }
 
-        .card { background: rgba(255, 255, 255, 0.4); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.8); position: relative; overflow: hidden; backdrop-filter: blur(20px); }
+        .card { background: var(--glass); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--glass-border); position: relative; overflow: hidden; backdrop-filter: blur(20px); }
         .card h2, .card h3 { margin-top: 0; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
         
         /* --- COMPONENTS --- */
@@ -112,9 +125,6 @@
         .tab { flex: 1; text-align: center; padding: 10px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 0.9rem; color: #666; transition: 0.3s; }
         .tab.active { background: var(--primary-grad); color: white; font-weight: 700; }
 
-        .photo-upload { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 12px; }
-        .photo-preview { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.05); border: 3px solid var(--primary); }
-
         .check-in-btn-area { text-align: center; margin: 30px 0; position: relative; }
         .big-btn { width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.6); border: 8px solid var(--secondary-grad); color: var(--secondary); font-size: 1.4rem; font-weight: 700; cursor: pointer; box-shadow: 0 15px 35px rgba(86, 171, 47, 0.3); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto; position: relative; z-index: 10; backdrop-filter: blur(5px); }
         .big-btn small { font-size: 0.8rem; margin-top: 5px; opacity: 0.7; font-weight: 500; display: block; }
@@ -128,7 +138,7 @@
         .user-details h4 { margin: 0; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
         .user-details p { margin: 2px 0 0 0; font-size: 0.8rem; color: #888; }
 
-        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; background: rgba(255, 255, 255, 0.5); padding: 10px 5px; border-radius: 30px; display: flex; justify-content: space-around; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; background: rgba(255, 255, 255, 0.65); padding: 10px 5px; border-radius: 30px; display: flex; justify-content: space-around; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding-bottom: calc(10px + var(--safe-bottom)); }
         .nav-item { text-align: center; color: #888; font-size: 0.65rem; cursor: pointer; flex: 1; transition: 0.3s; padding: 8px 0; border-radius: 20px; position: relative; }
         .nav-item.active { color: white; background: var(--primary-grad); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4); }
         .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 2px; position: relative; }
@@ -151,7 +161,7 @@
         #toast { visibility: hidden; min-width: 280px; background: rgba(45, 52, 54, 0.9); color: #fff; text-align: center; border-radius: 50px; padding: 12px 24px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); font-size: 14px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; font-weight: 500; }
         #toast.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; backdrop-filter: blur(5px); }
         .modal.open { display: flex; opacity: 1; }
         .modal-content { background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; animation: slideIn 0.3s; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
         .close-btn { float: right; cursor: pointer; font-size: 1.5rem; line-height: 20px; color: #aaa; transition: 0.2s;}
@@ -220,7 +230,7 @@
             
             <!-- APP VERSION -->
             <div class="app-version-tag">
-                Version <span id="app-version-login">1.0.0</span>
+                Version <span id="app-version-login">1.2.0</span>
             </div>
             
             <!-- SYNC STATUS -->
@@ -302,7 +312,10 @@
         <main id="view-history">
             <h2 style="font-size:1.2rem; margin-bottom:15px;">My Attendance History</h2>
             <div class="card">
-                <div style="display:flex; gap:10px; margin-bottom:10px;"><input type="month" id="hist-month" onchange="loadHistory()"></div>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="month" id="hist-month" onchange="loadHistory()">
+                    <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
                 <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Status</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
             </div>
         </main>
@@ -365,7 +378,10 @@
                 <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check-in All</button>
             </div>
             <div class="card">
-                <div style="display:flex; gap:10px; margin-bottom:10px;"><input type="date" id="ci-filter-date" onchange="loadAdminCheckins()"></div>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="date" id="ci-filter-date" onchange="loadAdminCheckins()">
+                    <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
                 <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp</th><th>Time</th><th>Loc</th><th>Status</th></tr></thead><tbody id="checkins-tbody"></tbody></table></div>
             </div>
         </main>
@@ -515,7 +531,7 @@
             <!-- VERSION DISPLAY -->
             <div style="text-align:center; margin-bottom:20px; background:rgba(106, 17, 203, 0.1); padding:10px; border-radius:10px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.0.0</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.2.0</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -556,12 +572,12 @@
 
     <script>
         // --- CONFIGURATION ---
-        // USER PROVIDED KEYS
+        // USER PROVIDED KEYS (Defaults - User should change these in settings)
         const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
         const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
         
         // APP VERSION
-        const APP_VERSION = "1.1.0"; 
+        const APP_VERSION = "1.2.0"; // Updated version
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
@@ -582,7 +598,7 @@
             adminProfile: { email: "admin@eas.com", mobile: "9999999999", pass: "admin", lockKey: "" },
             cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, // Centralized Config
             lastSeen: {}, // Online status tracking
-            lastModified: Date.now()
+            lastModified: 0 // Initialize to 0 to force fetch from cloud on first run
         };
         
         let isJsonSync = false;
@@ -602,8 +618,12 @@
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             
+            // 1. Load Local Data first (if exists)
             loadDataLocalOnly();
+            
+            // 2. Check Cloud Status immediately
             checkJsonStatus();
+            
             switchLogin('emp'); 
             requestNotificationPermission();
         };
@@ -631,17 +651,15 @@
 
         function updateHeartbeat() {
             if(!state.user || !isJsonSync) return;
-            // Fetch latest state to avoid overwrite conflicts
             pollCloudDatabase(true).then(() => {
-                // Update lastSeen for current user
                 if(!state.lastSeen) state.lastSeen = {};
                 state.lastSeen[state.user.id] = Date.now();
-                saveData(true); // Silent save
+                saveData(true); 
             });
         }
 
         function pollCloudDatabase(silent = false) {
-            if(state.isSaving) return;
+            if(state.isSaving) return Promise.resolve();
             if(JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return Promise.resolve();
 
             return fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
@@ -651,16 +669,16 @@
             })
             .then(data => {
                 if(data && data.record) {
-                    // Check if Cloud has new config
+                    // Update Config
                     if(data.record.cloudConfig) {
                         state.cloudConfig = data.record.cloudConfig;
-                        // Update local keys for next requests
                         localStorage.setItem('j_bin_id', state.cloudConfig.binId);
                         localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
 
+                    // ONLY MERGE IF CLOUD IS NEWER
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly(); 
@@ -676,28 +694,68 @@
             });
         }
 
+        // --- CRITICAL FIX: OPTIMISTIC LOCKING ---
         function uploadToCloudFolder(silent = false) {
             if(!isJsonSync || JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return;
-            state.isSaving = true;
-            state.lastModified = Date.now();
-            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
-                body: JSON.stringify(state)
+
+            // Step 1: Fetch absolute latest data from Cloud to check for conflicts
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
+            .then(res => {
+                if(!res.ok) throw new Error("Pre-check failed");
+                return res.json();
             })
-            .then(() => { if(!silent) updateSyncStatus('online', 'Saved'); })
-            .finally(() => { state.isSaving = false; });
+            .then(cloudData => {
+                if(cloudData && cloudData.record) {
+                    // CONFLICT CHECK:
+                    // If Cloud version is newer than what this device currently has,
+                    // DO NOT UPLOAD. Instead, merge the cloud data down and abort.
+                    if(cloudData.record.lastModified > state.lastModified) {
+                        console.warn("Sync Conflict Detected: Cloud has newer data. Aborting upload to prevent data loss.");
+                        mergeData(cloudData.record);
+                        saveDataLocalOnly();
+                        if(!silent) {
+                            alert("⚠️ Sync Conflict Detected: Another device has updated data recently. Your changes were NOT saved. The latest data has been loaded.");
+                            refreshCurrentView();
+                        }
+                        return; // Stop upload process
+                    }
+                }
+
+                // Step 2: If no conflict, proceed with upload
+                state.isSaving = true;
+                state.lastModified = Date.now();
+                
+                fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+                    body: JSON.stringify(state)
+                })
+                .then(() => { 
+                    if(!silent) updateSyncStatus('online', 'Saved'); 
+                })
+                .catch(err => {
+                    console.error("Upload failed", err);
+                    if(!silent) toast("Sync failed (Network Error)");
+                })
+                .finally(() => { 
+                    state.isSaving = false; 
+                });
+            })
+            .catch(err => {
+                console.error("Pre-check network error", err);
+                // Fallback: If we can't check, maybe try to upload blindly? 
+                // Better to be safe: tell user offline.
+                if(!silent) toast("Cannot verify cloud status. Changes saved locally only.");
+            });
         }
 
         function checkJsonStatus() {
-            // Use cloudConfig if available, else defaults
             if(state.cloudConfig && state.cloudConfig.binId) {
                 JSONBIN_ID = state.cloudConfig.binId;
                 JSONBIN_KEY = state.cloudConfig.masterKey;
                 localStorage.setItem('j_bin_id', JSONBIN_ID);
                 localStorage.setItem('j_api_key', JSONBIN_KEY);
             } else {
-                // Fallback to storage or defaults
                 JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
                 JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
             }
@@ -708,6 +766,12 @@
                 document.getElementById('login-sync-text').innerText = "Local Mode";
                 document.getElementById('btn-login-cloud').style.display = 'block';
                 document.getElementById('btn-login-cloud').classList.add('btn-danger');
+                
+                // ONLY APPLY DEFAULTS IF LOCAL STORAGE IS ALSO EMPTY
+                if(state.employees.length === 0) {
+                   state.employees = DEFAULT_EMPLOYEES;
+                   saveDataLocalOnly();
+                }
                 return;
             }
 
@@ -732,12 +796,14 @@
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
 
+                    // Prioritize Cloud Data over Local Data to avoid reverts
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly();
-                    } else if(!data.record.employees && !data.record.cloudConfig) {
-                        // Empty bin, init it
-                        uploadToCloudFolder(); 
+                    } else if(state.employees.length === 0 && (!data.record.employees || data.record.employees.length === 0)) {
+                        // Both Local and Cloud are empty, init with defaults ONLY here
+                        state.employees = DEFAULT_EMPLOYEES;
+                        uploadToCloudFolder(true); // Seed the cloud
                     }
                 }
                 startAutoSync();
@@ -747,6 +813,12 @@
                 document.getElementById('login-sync-dot').className = 'dot offline';
                 document.getElementById('login-sync-text').innerText = "Local Mode";
                 document.getElementById('btn-login-cloud').style.display = 'block';
+                
+                // If Cloud failed but we have local data, keep local. If local is empty, keep defaults.
+                if(state.employees.length === 0) {
+                    state.employees = DEFAULT_EMPLOYEES;
+                    saveDataLocalOnly();
+                }
             });
         }
 
@@ -766,19 +838,30 @@
         function loadDataLocalOnly() {
             const data = localStorage.getItem('eas_pro_db_v1');
             if(data) {
-                const parsed = JSON.parse(data);
-                state.employees = parsed.employees || [];
-                state.attendance = parsed.attendance || [];
-                state.leaves = parsed.leaves || [];
-                state.visits = parsed.visits || [];
-                state.notifications = parsed.notifications || [];
-                state.messages = parsed.messages || [];
-                state.adminProfile = parsed.adminProfile || state.adminProfile;
-                state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
-                state.lastSeen = parsed.lastSeen || {};
-                state.lastModified = parsed.lastModified || 0;
+                try {
+                    const parsed = JSON.parse(data);
+                    state.employees = parsed.employees || [];
+                    state.attendance = parsed.attendance || [];
+                    state.leaves = parsed.leaves || [];
+                    state.visits = parsed.visits || [];
+                    state.notifications = parsed.notifications || [];
+                    state.messages = parsed.messages || [];
+                    state.adminProfile = parsed.adminProfile || state.adminProfile;
+                    state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
+                    state.lastSeen = parsed.lastSeen || {};
+                    state.lastModified = parsed.lastModified || 0;
+                } catch (e) {
+                    console.error("Local data corrupted, resetting", e);
+                    // Corrupt data might crash the app, so we ignore it here
+                    // and let checkJsonStatus() handle the defaults.
+                    state.employees = [];
+                    state.lastModified = 0;
+                }
+            } else {
+                // Do NOT load defaults here. Wait for Cloud check.
+                state.employees = []; 
+                state.lastModified = 0;
             }
-            if(state.employees.length === 0) state.employees = DEFAULT_EMPLOYEES;
         }
 
         function saveData(silent = false) {
@@ -870,11 +953,9 @@
             checkUnreadMessages();
             loadEmpLeaveStatus();
             navTo('view-home');
-            updateHeartbeat(); // Init online status
-            
-            // Start Reminder Interval
-            setInterval(checkReminders, 60000 * 5); // Check every 5 mins
-            checkReminders(); // Check immediately
+            updateHeartbeat(); 
+            setInterval(checkReminders, 60000 * 5); 
+            checkReminders(); 
         }
 
         function initAdmin() {
@@ -958,15 +1039,10 @@
 
         function checkReminders() {
             if(state.user.role !== 'emp') return;
-            
             const now = new Date();
             const hour = now.getHours();
             const today = now.toISOString().split('T')[0];
-            
-            // Check if already checked in
             const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
-            
-            // Reminder logic: Before 11 AM (10:00 to 10:59) and not checked in
             if(hour === 10 && !checkedIn) {
                 sendLocalNotification("Attendance Reminder", "Please Check In before 11 AM!");
             }
@@ -1093,12 +1169,7 @@
                 tbody.innerHTML = myAtt.map(a => {
                     let badgeClass = 'bg-present';
                     let badgeText = 'Present';
-                    
-                    if(a.status === 'Leave') {
-                        badgeClass = 'bg-warning';
-                        badgeText = 'Leave';
-                    }
-
+                    if(a.status === 'Leave') { badgeClass = 'bg-warning'; badgeText = 'Leave'; }
                     return `
                         <tr>
                             <td>${a.date}</td>
@@ -1151,7 +1222,6 @@
                 endMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
             }
 
-            // Filter leaves that overlap with the month
             const reports = state.leaves.filter(l => {
                 return (l.from <= endMonth && l.to >= startMonth);
             });
@@ -1305,7 +1375,6 @@
             state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
             targetSelect.innerHTML = opts;
 
-            // Load Online Users
             loadOnlineUsers();
         }
 
@@ -1353,7 +1422,6 @@
             
             let count = 0;
             state.employees.forEach(emp => {
-                // Check if already checked in
                 const exists = state.attendance.find(a => a.eid === emp.id && a.date === today);
                 if(!exists) {
                     state.attendance.push({
@@ -1565,7 +1633,6 @@
 
         function checkUnreadNotifications() {
             const unreadCount = state.notifications.filter(n => (n.target === 'ALL' || n.target === state.user.id) && !n.read).length;
-            // Note: Add badge element in HTML if you want a visual counter
         }
 
         function markAllRead() {
@@ -1734,7 +1801,6 @@
         }
 
         function saveAdminSettings() {
-            // Update Cloud Config
             const newBinId = document.getElementById('adm-bin-id').value;
             const newApiKey = document.getElementById('adm-api-key').value;
             if(newBinId && newApiKey) {
@@ -1743,7 +1809,6 @@
                 toast("Cloud Config Updated. All employees will sync shortly.");
             }
 
-            // Update Profile
             state.adminProfile.email = document.getElementById('adm-email').value;
             state.adminProfile.mobile = document.getElementById('adm-mobile').value;
             const newPass = document.getElementById('adm-pass').value;
@@ -1769,22 +1834,19 @@
         }
 
         function forceAppUpdate() {
-            // Force reload to bypass cache
-            if(confirm("This will reload the app to check for updates. Continue?")) {
+            if(confirm("This will reloads app to check for updates. Continue?")) {
                 window.location.reload(true);
             }
         }
 
-        // --- LOCAL APP UPDATE FEATURE ---
         function loadLocalApp() {
             const fileInput = document.getElementById('local-app-file');
             const file = fileInput.files[0];
             if(!file) return toast("Please select an HTML file.");
 
-            if(confirm("This will replace the current app with the selected file immediately. Unsaved changes might be lost. Continue?")) {
+            if(confirm("This will replace current app with selected file immediately. Unsaved changes might be lost. Continue?")) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Overwrite the entire document with the new content
                     document.open();
                     document.write(e.target.result);
                     document.close();
