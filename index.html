@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#6a11cb">
+    <meta name="theme-color" content="#4e54c8">
     <title>Employee Attendance System (EAS)</title>
     
     <!-- PWA / MOBILE APP CAPABILITIES -->
@@ -14,14 +14,14 @@
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts (POPINS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- SERVICE WORKER SCRIPT FOR PWA CAPABILITY (Embedded) -->
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v8';
+                const CACHE_NAME = 'eas-pwa-cache-v11';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -41,22 +41,26 @@
     <style>
         /* --- CSS VARIABLES & RESET --- */
         :root {
-            --primary: #6a11cb;
-            --primary-grad: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); 
+            /* NEW COLOR PALETTE (Fresh Indigo/Ocean Theme) */
+            --primary: #4e54c8;
+            --primary-grad: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); 
             --secondary: #11998e;
-            --secondary-grad: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            --secondary-grad: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             --whatsapp: #25D366;
             --whatsapp-grad: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
             --danger: #ff416c;
             --danger-grad: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
             --warning: #f7971e;
+            
+            /* NEW FONT */
+            --font-family: 'Poppins', sans-serif;
+            
             --text-main: #2d3436;
             --text-light: #636e72;
-            --glass: rgba(255, 255, 255, 0.65); 
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --shadow: 0 10px 30px rgba(0,0,0,0.1);
-            --radius: 20px;
-            --font-family: 'Outfit', sans-serif;
+            --glass: rgba(255, 255, 255, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+            --radius: 24px;
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -64,7 +68,8 @@
 
         body { 
             margin: 0; font-family: var(--font-family); 
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            /* NEW BACKGROUND ANIMATION */
+            background: linear-gradient(-45deg, #4e54c8, #8f94fb, #a18cd1, #fbc2eb);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
             color: var(--text-main); 
@@ -74,7 +79,7 @@
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(86, 171, 47, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(86, 171, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(86, 171, 47, 0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(56, 239, 125, 0); } 100% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0); } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* --- PRINT STYLES --- */
@@ -82,10 +87,10 @@
             body { background: white; height: auto; display: block; overflow: visible; animation: none; }
             #login-view, nav, header, .btn, .check-in-btn-area, .modal, #toast, .chat-container, .chat-input-area, .form-group button { display: none !important; }
             main { display: block !important; padding: 0; overflow: visible; }
-            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; color: black; background: white; margin-bottom: 10px; }
+            .card { box-shadow: none; border:1px solid #ccc; break-inside: avoid; color: black; background: white; margin-bottom: 10px; }
             table { width: 100%; border-collapse: collapse; font-size: 10px; }
-            th, td { border: 1px solid #000; padding: 4px; text-align: left; color: black; }
-            .badge { color: white !important; border: 1px solid #000; }
+            th, td { border:1px solid #000; padding: 4px; text-align: left; color: black; }
+            .badge { color: white !important; border:1px solid #000; }
         }
 
         /* --- LAYOUT --- */
@@ -93,9 +98,9 @@
         
         header {
             background: var(--glass); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--glass-border); z-index: 100; backdrop-filter: blur(20px); position: sticky; top: 0; touch-action: manipulation;
+            border-bottom:1px solid var(--glass-border); z-index: 100; backdrop-filter: blur(20px); position: sticky; top: 0; touch-action: manipulation;
         }
-        header h1 { margin: 0; font-size: 1.2rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; letter-spacing: -0.5px; flex: 1; }
+        header h1 { margin: 0; font-size: 1.2rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; letter-spacing: -0.5px; flex: 1; }
         
         main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; display: none; animation: fadeIn 0.4s ease; scroll-behavior: smooth; scrollbar-width: none; }
         main.active { display: block; }
@@ -104,47 +109,64 @@
         .card h2, .card h3 { margin-top: 0; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
         
         /* --- COMPONENTS --- */
-        .btn { width: auto; padding: 12px 20px; border: none; border-radius: 50px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: 0.2s; margin-bottom: 5px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .btn:active { transform: scale(0.95); }
+        .btn { width: auto; padding: 14px 24px; border: none; border-radius: 50px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-bottom: 5px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.96); }
         .btn-primary { background: var(--primary-grad); }
         .btn-success { background: var(--secondary-grad); }
         .btn-danger { background: var(--danger-grad); }
         .btn-whatsapp { background: var(--whatsapp-grad); }
-        .btn-outline { background: rgba(255,255,255,0.7); border: 2px solid rgba(255,255,255,0.5); color: var(--text-main); }
+        .btn-outline { background: rgba(255,255,255,0.8); border: 2px solid rgba(255,255,255,0.8); color: var(--primary); }
         .btn-block { width: 100%; }
-        .btn-sm { padding: 8px 16px; font-size: 0.85rem; margin-right: 5px; border-radius: 12px; }
+        .btn-sm { padding: 10px 16px; font-size: 0.8rem; margin-right: 5px; border-radius: 20px; }
 
         #btn-force-sync { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--primary); padding: 5px; transition: 0.3s; }
         #btn-force-sync.syncing { animation: spin 1s linear infinite; color: #f7971e; }
 
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-light); font-weight: 600; }
-        input, select, textarea { width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; font-family: inherit; font-size: 1rem; transition: 0.3s; background: rgba(255,255,255,0.6); -webkit-appearance: none; }
-        input:focus, select:focus, textarea:focus { border-color: #6a11cb; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 0 4px rgba(106, 17, 203, 0.1); }
+        input, select, textarea { width: 100%; padding: 14px; border: 2px solid rgba(255,255,255,0.5); border-radius: 15px; font-family: inherit; font-size: 1rem; transition: 0.3s; background: rgba(255,255,255,0.7); -webkit-appearance: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(255,255,255,1); box-shadow: 0 0 0 0 4px rgba(78, 84, 200, 0.1); }
 
-        .login-tabs { display: flex; background: rgba(255,255,255,0.7); padding: 4px; border-radius: 25px; margin-bottom: 25px; backdrop-filter: blur(5px); }
-        .tab { flex: 1; text-align: center; padding: 10px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 0.9rem; color: #666; transition: 0.3s; }
-        .tab.active { background: var(--primary-grad); color: white; font-weight: 700; }
+        .login-tabs { display: flex; background: rgba(255,255,255,0.8); padding: 5px; border-radius: 30px; margin-bottom: 25px; backdrop-filter: blur(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .tab { flex: 1; text-align: center; padding: 12px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #888; transition: 0.3s; }
+        .tab.active { background: var(--primary-grad); color: white; font-weight: 700; box-shadow: 0 4px 10px rgba(78, 84, 200, 0.2); }
 
         .check-in-btn-area { text-align: center; margin: 30px 0; position: relative; }
-        .big-btn { width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.6); border: 8px solid var(--secondary-grad); color: var(--secondary); font-size: 1.4rem; font-weight: 700; cursor: pointer; box-shadow: 0 15px 35px rgba(86, 171, 47, 0.3); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto; position: relative; z-index: 10; backdrop-filter: blur(5px); }
-        .big-btn small { font-size: 0.8rem; margin-top: 5px; opacity: 0.7; font-weight: 500; display: block; }
+        .big-btn { width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,0.6); border: 8px solid var(--secondary-grad); color: var(--secondary); font-size: 1.5rem; font-weight: 700; cursor: pointer; box-shadow: 0 20px 40px rgba(56, 239, 125, 0.3); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto; position: relative; z-index: 10; backdrop-filter: blur(5px); }
+        .big-btn small { font-size: 0.9rem; margin-top: 8px; opacity: 0.7; font-weight: 500; display: block; }
         .big-btn.checked-in { background: var(--secondary-grad); border-color: transparent; color: white; animation: pulse 2s infinite; cursor: default; }
         .big-btn.on-leave { background: var(--warning); border-color: transparent; color: white; cursor: not-allowed; opacity: 0.9; }
 
-        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.4); }
         .list-item:last-child { border-bottom: none; }
         .user-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.05); flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.05); flex-shrink: 0; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .user-details h4 { margin: 0; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
         .user-details p { margin: 2px 0 0 0 0; font-size: 0.8rem; color: #888; }
 
-        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; background: rgba(255, 255, 255, 0.65); padding: 10px 5px; border-radius: 30px; display: flex; justify-content: space-around; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding-bottom: calc(10px + var(--safe-bottom)); }
-        .nav-item { text-align: center; color: #888; font-size: 0.65rem; cursor: pointer; flex: 1; transition: 0.3s; padding: 8px 0; border-radius: 20px; position: relative; }
-        .nav-item.active { color: white; background: var(--primary-grad); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4); }
-        .nav-icon { font-size:1.4rem; display: block; margin-bottom: 2px; position: relative; }
+        /* --- ROUND ICONS --- */
+        .icon-circle {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+            margin-bottom: 4px;
+            box-shadow: inset 0 0 5px rgba(255,255,255,0.5);
+        }
+        .nav-item.active .icon-circle {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            color: #fff;
+        }
 
-        .nav-badge { position: absolute; top: 0px; right: 15px; background: var(--danger); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 420px; background: rgba(255, 255, 255, 0.85); padding: 12px 10px; border-radius: 35px; display: flex; justify-content: space-around; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding-bottom: calc(12px + var(--safe-bottom)); }
+        .nav-item { text-align: center; color: #888; font-size: 0.7rem; cursor: pointer; flex: 1; transition: 0.3s; padding: 6px 0; border-radius: 20px; position: relative; }
+        .nav-item.active { color: var(--primary); font-weight: 700; transform: translateY(-2px); }
+        
+        .nav-badge { position: absolute; top: 0px; right: 20px; background: var(--danger); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; z-index: 2; border: 2px solid rgba(255,255,255,0.8); }
         .nav-badge.show { display: flex; }
 
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -154,12 +176,12 @@
 
         /* --- CHAT ENGINE STYLES --- */
         .chat-container { display: flex; flex-direction: column; gap: 15px; min-height: calc(100vh - 380px); overflow-y: auto; padding: 10px; padding-bottom: 80px; }
-        .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; word-wrap: break-word; }
+        .msg-bubble { max-width: 80%; padding: 12px 18px; border-radius: 20px; font-size: 0.9rem; line-height: 1.5; position: relative; animation: fadeIn 0.3s ease; word-wrap: break-word; }
         .msg-bubble.sent { align-self: flex-end; background: var(--primary-grad); color: white; border-bottom-right-radius: 4px; }
-        .msg-bubble.received { align-self: flex-start; background: rgba(255,255,255,0.8); color: #333; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .msg-bubble.received { align-self: flex-start; background: rgba(255,255,255,0.9); color: #333; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .msg-meta { display: block; font-size: 0.65rem; margin-top: 5px; opacity: 0.7; text-align: right; }
 
-        .chat-input-area { position: fixed; bottom: 90px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 25px; display: flex; gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px); z-index: 90; align-items: center; }
+        .chat-input-area { position: fixed; bottom: 95px; left: 15px; right: 15px; background: rgba(255,255,255,0.95); padding: 12px; border-radius: 30px; display: flex; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); backdrop-filter: blur(10px); z-index: 90; align-items: center; }
         #emp-chat-target {
             width: auto; max-width: 120px; 
             border: none; background: transparent; 
@@ -169,50 +191,51 @@
         }
         #emp-chat-target option { color: #333; background: white; }
         .chat-input-area input { flex: 1; border: none; background: transparent; padding: 0 10px; font-size: 0.95rem; }
-        .chat-input-area button { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .chat-input-area button { width: 42px; height: 42px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        #toast { visibility: hidden; min-width: 280px; background: rgba(45, 52, 54, 0.9); color: #fff; text-align: center; border-radius: 50px; padding: 12px 24px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); font-size: 14px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; font-weight: 500; }
+        #toast { visibility: hidden; min-width: 280px; background: rgba(45, 52, 54, 0.95); color: #fff; text-align: center; border-radius: 50px; padding: 14px 26px; position: fixed; z-index: 3000; left: 50%; bottom: 110px; transform: translateX(-50%) translateY(20px); font-size: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; font-weight: 500; }
         #toast.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; backdrop-filter: blur(5px); }
         .modal.open { display: flex; opacity: 1; }
-        .modal-content { background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; animation: slideIn 0.3s; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal-content { background: rgba(255, 255, 255, 0.98); width: 92%; max-width: 400px; padding: 25px; border-radius: 30px; animation: slideIn 0.3s; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
         .close-btn { float: right; cursor: pointer; font-size: 1.5rem; line-height: 20px; color: #aaa; transition: 0.2s;}
         .close-btn:hover { color: var(--danger); transform: rotate(90deg); }
 
-        .live-sync-indicator { display: none; font-size: 0.7rem; color: #666; align-items: center; gap: 5px; font-weight: 600; margin-left: 10px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 15px; backdrop-filter: blur(5px); }
+        .live-sync-indicator { display: none; font-size: 0.75rem; color: #666; align-items: center; gap: 5px; font-weight: 600; margin-left: 10px; background: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 15px; backdrop-filter: blur(5px); }
         .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; transition: 0.3s; }
         .dot.large { width: 12px; height: 12px; } 
         .dot.syncing { background: #f7971e; animation: pulse 1s infinite; }
-        .dot.online { background: #00ff9d; box-shadow: 0 0 10px #00ff9d; }
+        .dot.online { background: #38ef7d; box-shadow: 0 0 10px #38ef7d; }
         .dot.offline { background: #ff416c; box-shadow: 0 0 10px #ff416c; }
 
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(200,200,200,0.5); transition: .4s; border-radius: 34px; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(200,200,200,0.6); transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input:checked + .slider { background: var(--secondary-grad); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        .stat-card { background: rgba(255,255,255,0.3); padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.6); cursor: pointer; transition: 0.2s; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); backdrop-filter: blur(10px); }
-        .dashboard-sync-status { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; font-weight: 600; padding: 15px; background: rgba(255,255,255,0.3); border-radius: 12px; margin-top: 10px; }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: rgba(255,255,255,0.3); border-radius: 12px; overflow: hidden; }
-        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom:1px solid rgba(255,255,255,0.3); }
-        .data-table th { background: rgba(106, 17, 203, 0.1); color: var(--primary); font-weight: 700; }
-        .notif-item { background: rgba(255,255,255,0.5); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
-        .notif-item.unread { background: rgba(106, 17, 203, 0.1); border-left-color: var(--warning); }
+        .stat-card { background: rgba(255,255,255,0.4); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.6); cursor: pointer; transition: 0.2s; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); backdrop-filter: blur(10px); }
+        .dashboard-sync-status { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; font-weight: 600; padding: 15px; background: rgba(255,255,255,0.4); border-radius: 15px; margin-top: 10px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: rgba(255,255,255,0.4); border-radius: 15px; overflow: hidden; }
+        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom:1px solid rgba(255,255,255,0.4); }
+        .data-table th { background: rgba(78, 84, 200, 0.1); color: var(--primary); font-weight: 700; }
+        .notif-item { background: rgba(255,255,255,0.6); padding: 12px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .notif-item.unread { background: rgba(78, 84, 200, 0.1); border-left-color: var(--warning); }
         .notif-meta { font-size: 0.7rem; color: #888; margin-top: 5px; }
 
-        .online-user-row { display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,255,0.3); border-radius:10px; margin-bottom:5px;}
+        .online-user-row { display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,255,0.4); border-radius:12px; margin-bottom:5px;}
         
         .app-version-tag {
-            font-size: 0.7rem;
-            color: rgba(0,0,0,0.5);
-            background: rgba(255,255,255,0.3);
-            padding: 4px 10px;
-            border-radius: 10px;
+            font-size: 0.75rem;
+            color: rgba(78, 84, 200, 0.7);
+            background: rgba(255,255,255,0.5);
+            padding: 5px 12px;
+            border-radius: 12px;
             display: inline-block;
             margin-top: 10px;
+            font-weight: 600;
         }
 
         /* REPORTS STYLES */
@@ -221,14 +244,14 @@
         }
         .rep-stat {
             text-align: center;
-            background: rgba(255,255,255,0.4);
-            padding: 10px;
-            border-radius: 12px;
+            background: rgba(255,255,255,0.5);
+            padding: 12px;
+            border-radius: 15px;
             flex: 1;
             margin: 0 5px;
         }
-        .rep-stat h4 { margin:0; font-size:1.2rem; color:var(--secondary); }
-        .rep-stat small { font-size:0.7rem; color:#666; }
+        .rep-stat h4 { margin:0; font-size:1.3rem; color:var(--secondary); }
+        .rep-stat small { font-size:0.75rem; color:#666; }
     </style>
 </head>
 <body>
@@ -237,8 +260,15 @@
 
     <!-- LOGIN VIEW -->
     <div id="login-view" style="height:100vh; display:flex; align-items:center; justify-content:center;">
-        <div class="card" style="width:90%; max-width:350px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.1);">
-            <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:25px; font-size:1.6rem; letter-spacing:-1px;">Employee Attendance<br><small style="font-size:1rem; opacity:0.8;">System (EAS)</small></h1>
+        <div class="card" style="width:90%; max-width:360px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.15);">
+            <div style="margin-bottom:15px; display:flex; justify-content:center;">
+                 <div class="icon-circle" style="background:var(--primary-grad); color:white; width:60px; height:60px; font-size:1.8rem;">
+                    <i class="fas fa-fingerprint"></i>
+                 </div>
+            </div>
+            
+            <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:25px; font-size:1.7rem; font-weight:700;">EAS</h1>
+            <p style="margin-top:-20px; margin-bottom:20px; color:#666; font-weight:500;">Employee Attendance</p>
             
             <div class="login-tabs">
                 <div id="tab-emp" class="tab active" onclick="switchLogin('emp')">Employee</div>
@@ -247,19 +277,21 @@
             
             <div class="form-group"><input type="text" id="login-id" placeholder="Enter ID" style="text-align:center;"></div>
             <div class="form-group"><input type="password" id="login-pass" placeholder="Password" style="text-align:center;"></div>
-            <button class="btn btn-primary btn-block" onclick="login()">Login</button>
+            <button class="btn btn-primary btn-block" onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
             
             <button id="btn-login-cloud" class="btn btn-outline btn-sm" onclick="openCloudConfig()" style="width:100%; margin-top:15px;">
-                <i class="fas fa-cloud-upload-alt"></i> Local Config
+                <i class="fas fa-cloud"></i> Cloud Config
             </button>
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">1.7.0</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">1.8.0</span></div>
             
-            <div style="margin-top:10px; display:flex; justify-content:center; align-items:center; gap:8px;">
+            <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
-                 <span id="login-sync-text" style="font-size:0.7rem; color:#666;">Checking Cloud...</span>
+                 <span id="login-sync-text" style="font-size:0.75rem; color:#666;">Checking Cloud...</span>
             </div>
         </div>
     </div>
@@ -270,10 +302,14 @@
             <div class="live-sync-indicator" id="header-sync-area" style="display:none;">
                 <div class="dot" id="sync-dot"></div> <span id="sync-text">Syncing...</span>
             </div>
-            <button id="btn-force-sync" style="display:none;" onclick="manualSync()"><i class="fas fa-sync-alt"></i></button>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <img id="header-avatar" src="" class="avatar" style="width:35px; height:35px;">
-                <span id="settings-btn" style="font-size:1.2rem; cursor:pointer; display:none;" onclick="checkPin()"><i class="fas fa-cog"></i></span>
+            <div class="icon-circle" onclick="manualSync()" id="btn-force-sync" style="width:35px; height:35px; background:rgba(255,255,255,0.3); cursor:pointer;">
+                 <i class="fas fa-sync"></i>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img id="header-avatar" src="" class="avatar" style="width:38px; height:38px;">
+                <div id="settings-btn" style="width:35px; height:35px; display:none; cursor:pointer; border-radius:50%; background:rgba(255,255,255,0.3); align-items:center; justify-content:center;" onclick="checkPin()">
+                    <i class="fas fa-cog" style="color:var(--text-main);"></i>
+                </div>
             </div>
         </header>
 
@@ -281,7 +317,7 @@
         <main id="view-home">
             <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border:none;">
                 <h3>Hello, <span id="u-name">User</span> 👋</h3>
-                <p style="opacity:0.8; font-size: 0.9rem;" id="today-date">Date</p>
+                <p style="opacity:0.9; font-size: 0.9rem;" id="today-date">Date</p>
                 <div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;">
                     <small>Emp ID: <span id="u-id" style="font-weight:700">-</span></small>
                     <br>
@@ -354,14 +390,16 @@
             <div id="chat-list-emp" class="chat-container"></div>
             <!-- INPUT AREA WITH TARGET SELECTOR -->
             <div class="chat-input-area">
-                <div style="display:flex; align-items:center; gap:5px; border-right:1px solid rgba(0,0,0,0.1); padding-right:10px;">
-                    <i class="fas fa-caret-down" style="color:#666; font-size:0.8rem;"></i>
+                <div style="display:flex; align-items:center; gap:8px; border-right:1px solid rgba(0,0,0,0.1); padding-right:12px;">
+                    <i class="fas fa-caret-down" style="color:#888; font-size:0.8rem;"></i>
                     <select id="emp-chat-target">
                         <!-- Populated by JS -->
                     </select>
                 </div>
                 <input type="text" id="emp-chat-input" placeholder="Type message..." onkeypress="handleEnterEmpChat(event)">
-                <button class="btn btn-primary" onclick="sendEmpMessage()"><i class="fas fa-paper-plane"></i></button>
+                <div class="icon-circle" onclick="sendEmpMessage()" style="width:36px; height:36px; background:var(--primary); color:white; cursor:pointer;">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
             </div>
         </main>
 
@@ -399,8 +437,8 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                 <h2 style="font-size:1.2rem;">All Check-Ins</h2>
                 <div style="display:flex; gap:5px;">
-                    <button class="btn btn-danger btn-sm" onclick="deleteSelectedCheckins()"><i class="fas fa-trash-alt"></i> Delete Selected</button>
-                    <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check-in All</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteSelectedCheckins()"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check All</button>
                 </div>
             </div>
             <div class="card">
@@ -453,6 +491,43 @@
         <main id="view-reports">
             <h2 style="font-size:1.2rem; margin-bottom:15px;">Reports</h2>
             
+            <!-- COMPANY WISE REPORT -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(78,84,200,0.05) 0%, rgba(143,148,251,0.05) 100%);">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Company Wise Report</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadCompanyReportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                </div>
+                
+                <!-- NEW: COMPANY DROPDOWN -->
+                <div class="form-group">
+                    <label>Filter Company</label>
+                    <select id="rep-comp-select" onchange="generateCompanyReport()">
+                        <option value="ALL">All Companies</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Month</label>
+                    <input type="month" id="rep-comp-month" onchange="generateCompanyReport()">
+                </div>
+                
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Total Emp</th>
+                                <th style="color:var(--secondary)">Present</th>
+                                <th style="color:var(--danger)">Absent</th>
+                                <th style="color:var(--warning)">Leave</th>
+                                <th>Att %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="company-report-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Daily Report -->
             <div class="card">
                 <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
@@ -549,24 +624,66 @@
 
         <!-- NAV BARS -->
         <nav class="bottom-nav" id="nav-emp">
-            <div class="nav-item active" onclick="navTo('view-home', this)"><span class="nav-icon"><i class="fas fa-home"></i></span>Home</div>
-            <div class="nav-item" onclick="navTo('view-visits-emp', this)"><span class="nav-icon"><i class="fas fa-tools"></i></span>Visits</div>
-            <div class="nav-item" onclick="navTo('view-history', this)"><span class="nav-icon"><i class="fas fa-history"></i></span>History</div>
-            <div class="nav-item" onclick="navTo('view-chat-emp', this)"><span class="nav-icon"><i class="fas fa-comments"></i><span id="emp-chat-badge" class="nav-badge">!</span></span>Msg</div>
-            <div class="nav-item" onclick="logout()"><span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>Exit</div>
+            <div class="nav-item active" onclick="navTo('view-home', this)">
+                <div class="icon-circle"><i class="fas fa-home"></i></div>
+                Home
+            </div>
+            <div class="nav-item" onclick="navTo('view-visits-emp', this)">
+                <div class="icon-circle"><i class="fas fa-tools"></i></div>
+                Visits
+            </div>
+            <div class="nav-item" onclick="navTo('view-history', this)">
+                <div class="icon-circle"><i class="fas fa-history"></i></div>
+                History
+            </div>
+            <div class="nav-item" onclick="navTo('view-chat-emp', this)">
+                <div class="icon-circle"><i class="fas fa-comments"></i><span id="emp-chat-badge" class="nav-badge">!</span></div>
+                Msg
+            </div>
+            <div class="nav-item" onclick="logout()">
+                <div class="icon-circle" style="background:rgba(255,65,108,0.1); color:var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
+                Exit
+            </div>
         </nav>
 
         <nav class="bottom-nav" id="nav-adm" style="display:none;">
-            <div class="nav-item active" onclick="navTo('view-dashboard', this)"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span>Dash</div>
-            <div class="nav-item" onclick="navTo('view-checkins-adm', this)"><span class="nav-icon"><i class="fas fa-clock"></i></span>In</div>
-            <div class="nav-item" onclick="navTo('view-team', this)"><span class="nav-icon"><i class="fas fa-users"></i></span>Team</div>
-            <div class="nav-item" onclick="navTo('view-approvals', this)"><span class="nav-icon"><i class="fas fa-user-clock"></i></span>Leaves</div>
-            <div class="nav-item" onclick="navTo('view-visits-adm', this)"><span class="nav-icon"><i class="fas fa-file-invoice"></i></span>Visits</div>
+            <div class="nav-item active" onclick="navTo('view-dashboard', this)">
+                <div class="icon-circle"><i class="fas fa-chart-pie"></i></div>
+                Dash
+            </div>
+            <div class="nav-item" onclick="navTo('view-checkins-adm', this)">
+                <div class="icon-circle"><i class="fas fa-clock"></i></div>
+                In
+            </div>
+            <div class="nav-item" onclick="navTo('view-team', this)">
+                <div class="icon-circle"><i class="fas fa-users"></i></div>
+                Team
+            </div>
+            <div class="nav-item" onclick="navTo('view-approvals', this)">
+                <div class="icon-circle"><i class="fas fa-user-clock"></i></div>
+                Leaves
+            </div>
+            <div class="nav-item" onclick="navTo('view-visits-adm', this)">
+                <div class="icon-circle"><i class="fas fa-file-invoice"></i></div>
+                Visits
+            </div>
             <!-- NEW: REPORTS BUTTON -->
-            <div class="nav-item" onclick="navTo('view-reports', this)"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Rpts</div>
-            <div class="nav-item" onclick="navTo('view-chat-adm', this)"><span class="nav-icon"><i class="fas fa-comments"></i></span>Msg</div>
-            <div class="nav-item" onclick="navTo('view-meetings', this)"><span class="nav-icon"><i class="fas fa-video"></i></span>Meets</div>
-            <div class="nav-item" onclick="logout()"><span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>Exit</div>
+            <div class="nav-item" onclick="navTo('view-reports', this)">
+                <div class="icon-circle"><i class="fas fa-chart-bar"></i></div>
+                Rpts
+            </div>
+            <div class="nav-item" onclick="navTo('view-chat-adm', this)">
+                <div class="icon-circle"><i class="fas fa-comments"></i></div>
+                Msg
+            </div>
+            <div class="nav-item" onclick="navTo('view-meetings', this)">
+                <div class="icon-circle"><i class="fas fa-video"></i></div>
+                Meets
+            </div>
+            <div class="nav-item" onclick="logout()">
+                <div class="icon-circle" style="background:rgba(255,65,108,0.1); color:var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
+                Exit
+            </div>
         </nav>
     </div>
 
@@ -615,9 +732,9 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('modal-settings')">&times;</span>
             <h2>Admin Settings</h2>
-            <div style="text-align:center; margin-bottom:20px; background:rgba(106, 17, 203, 0.1); padding:10px; border-radius:10px;">
+            <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.7.0</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.8.0</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -659,7 +776,7 @@
         // --- CONFIGURATION ---
         const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
         const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
-        const APP_VERSION = "1.7.0"; 
+        const APP_VERSION = "1.8.0";
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
@@ -703,6 +820,13 @@
             document.getElementById('ci-filter-date').valueAsDate = new Date();
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            
+            // ADD: Initialize Company Report Date (keep existing)
+            const repMonthInput = document.getElementById('rep-comp-month');
+            if(repMonthInput) {
+                 repMonthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            }
+            
             document.getElementById('rep-date').valueAsDate = new Date(); // Pre-fill Daily Report with today
             document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; // Pre-fill Monthly Report with current month
 
@@ -970,6 +1094,7 @@
             if(id === 'view-reports') { 
                 if(document.getElementById('rep-date').value) generateDailyReport();
                 if(document.getElementById('rep-month').value) generateMonthlyReport();
+                if(document.getElementById('rep-comp-month').value) generateCompanyReport();
             }
             if(id === 'view-meetings') {
                 loadMeetingsList();
@@ -1196,7 +1321,7 @@
                     if(l.status === 'Approved') badgeColor = 'bg-present';
                     if(l.status === 'Rejected') badgeColor = 'bg-danger';
                     return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.4); padding:10px; border-radius:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.5); padding:10px; border-radius:10px; margin-bottom:8px;">
                         <div>
                             <div style="font-size:0.85rem; font-weight:600;">${l.from} to ${l.to}</div>
                             <div style="font-size:0.7rem; color:#666;">${l.reason}</div>
@@ -1356,7 +1481,128 @@
             }
         }
 
-        // --- REPORTS LOGIC ---
+        // --- REPORTS LOGIC (UPDATED) ---
+        function generateCompanyReport() {
+            const monthVal = document.getElementById('rep-comp-month').value; // YYYY-MM
+            const selectedComp = document.getElementById('rep-comp-select').value; // Get selected company
+            
+            if(!monthVal) return;
+            const tbody = document.getElementById('company-report-tbody');
+            const [year, month] = monthVal.split('-').map(Number);
+            
+            // Get days in month
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            // 1. Get Unique Companies
+            const allCompanies = [...new Set(state.employees.map(e => e.company))].filter(c => c && c.trim() !== "");
+            
+            // 2. Populate Dropdown if it's empty (first run)
+            const selectEl = document.getElementById('rep-comp-select');
+            if(selectEl.options.length <= 1) { // Check if only default "All" exists
+                allCompanies.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.innerText = c;
+                    selectEl.appendChild(opt);
+                });
+            }
+
+            // 3. Filter companies based on selection
+            const companiesToShow = (selectedComp === 'ALL') ? allCompanies : allCompanies.filter(c => c === selectedComp);
+            
+            let rows = '';
+            let totalEmpCount = 0;
+            let totalPresent = 0;
+            let totalAbsent = 0;
+            let totalLeave = 0;
+
+            companiesToShow.forEach(comp => {
+                // 4. Get employees for this company
+                const compEmps = state.employees.filter(e => e.company === comp);
+                const empCount = compEmps.length;
+                
+                let p = 0, l = 0, a = 0;
+                
+                // 5. Calculate stats for this company's employees
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    // Check if ANY employee from this company is present on this day
+                    const atts = state.attendance.filter(at => at.date === dayStr && compEmps.some(e => e.id === at.eid));
+                    
+                    atts.forEach(at => {
+                        if(at.status === 'Present') p++;
+                        else if(at.status === 'Leave') l++;
+                    });
+                }
+
+                // Calculate Absent (Total days * Total Emps) - (Present + Leave)
+                a = (empCount * daysInMonth) - (p + l);
+
+                // Aggregate totals
+                totalEmpCount += empCount;
+                totalPresent += p;
+                totalAbsent += a;
+                totalLeave += l;
+
+                const percentage = (empCount * daysInMonth) > 0 ? Math.round(((p + l) / (empCount * daysInMonth)) * 100) : 0;
+
+                rows += `
+                <tr>
+                    <td><div style="font-weight:600; color:var(--primary);">${comp}</div></td>
+                    <td>${empCount}</td>
+                    <td><span class="badge bg-present">${p}</span></td>
+                    <td><span class="badge bg-danger">${a}</span></td>
+                    <td><span class="badge bg-warning">${l}</span></td>
+                    <td><small>${percentage}%</small></td>
+                </tr>`;
+            });
+
+            // Handle "No Data" case
+            if(companiesToShow.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>No companies found.</td></tr>";
+            } else {
+                tbody.innerHTML = rows;
+            }
+        }
+
+        function downloadCompanyReportCSV() {
+            const monthVal = document.getElementById('rep-comp-month').value;
+            const selectedComp = document.getElementById('rep-comp-select').value;
+            
+            if(!monthVal) return toast("Select Month");
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const allCompanies = [...new Set(state.employees.map(e => e.company))].filter(c => c && c.trim() !== "");
+            const companiesToExport = (selectedComp === 'ALL') ? allCompanies : allCompanies.filter(c => c === selectedComp);
+            
+            const headers = ["Month", "Company", "Total Employees", "Present", "Absent", "Leave", "Attendance %"];
+            const rows = [];
+            
+            companiesToExport.forEach(comp => {
+                const compEmps = state.employees.filter(e => e.company === comp);
+                const empCount = compEmps.length;
+                let p = 0, l = 0, a = 0;
+
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const atts = state.attendance.filter(at => at.date === dayStr && compEmps.some(e => e.id === at.eid));
+                    atts.forEach(at => {
+                        if(at.status === 'Present') p++;
+                        else if(at.status === 'Leave') l++;
+                    });
+                }
+                a = (empCount * daysInMonth) - (p + l);
+                const percentage = (empCount * daysInMonth) > 0 ? Math.round(((p + l) / (empCount * daysInMonth)) * 100) : 0;
+                
+                rows.push([monthVal, comp, empCount, p, a, l, percentage]);
+            });
+
+            downloadCSV([headers, ...rows], `Company_Report_${monthVal}.csv`);
+        }
+
         function generateDailyReport() {
             const date = document.getElementById('rep-date').value;
             if(!date) return;
@@ -1484,7 +1730,7 @@
                 }
                 rows.push([monthVal, emp.name, p, l, a, p+l+a]);
             });
-            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
+            downloadCSV([headers, ...rows], `Monthly_Report_${monthVal}.csv`);
         }
 
         // --- CHAT ENGINE ---
@@ -1565,7 +1811,7 @@
 
         function loadEmpChat() {
             const list = document.getElementById('chat-list-emp');
-            // Filter messages relevant to the current user:
+            // Filter messages relevant to current user:
             // 1. Broadcasts (target = ALL)
             // 2. Sent to me (target = myID)
             // 3. Sent by me (sender = myID) - shows messages to Admin AND messages to colleagues
@@ -1649,216 +1895,40 @@
                     <td><input type="checkbox" class="chk-ci" value="${a.date}_${a.eid}"></td>
                     <td><b>${a.name}</b></td>
                     <td>${a.time}</td>
-                    <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:blue;">Map</a>`}</td>
+                    <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:var(--primary);">Map</a>`}</td>
                     <td><span class="badge ${a.status === 'Leave' ? 'bg-warning' : 'bg-present'}">${a.status === 'Leave' ? 'Leave' : 'Present'}</span></td>
                 </tr>
             `).join('');
         }
 
-        // === NEW: REPORTS LOGIC === ADMIN === -->
-        function loadAdminApprovals() {
-            const list = document.getElementById('pending-approvals-list');
-            const requests = state.leaves.filter(l => l.status === 'Pending');
-            if(requests.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No pending leave requests.</p>";
-                return;
-            }
-            list.innerHTML = requests.map(r => `
-                <div class="card" style="padding:15px; border-left: 5px solid var(--warning);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <h3 style="margin:0; font-size:1rem;">${r.name}</h3>
-                        <div style="display:flex; gap:5px;">
-                            <button class="btn btn-sm btn-danger" onclick="deleteLeave(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom:5px; font-weight:600; color:var(--primary);">${r.from} to ${r.to}</div>
-                    <p style="margin:0 0 10px 0; font-size:0.9rem; color:#555; font-style:italic;">"${r.reason}"</p>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn btn-success btn-sm" onclick="processLeave(${r.id}, 'Approved')">Approve</button>
-                        <button class="btn btn-danger btn-sm" onclick="processLeave(${r.id}, 'Rejected')">Reject</button>
-                    </div>
-                </div>
-            `).join('');
+        function toggleAllChecks(source) {
+            document.querySelectorAll('.chk-ci').forEach(c => c.checked = source.checked);
         }
 
-        // --- NEW: REPORTS LOGIC (ADMIN) === -->
-        function generateDailyReport() {
-            const date = document.getElementById('rep-date').value;
-            if(!date) return;
-            const area = document.getElementById('daily-report-area');
-            
-            let presentCount = 0;
-            let absentCount = 0;
-            let leaveCount = 0;
-            let rows = '';
-
-            state.employees.forEach(emp => {
-                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
-                let status = 'Absent';
-                let statusBadge = 'bg-danger';
-                
-                if(att) {
-                    status = att.status;
-                    if(att.status === 'Present') { presentCount++; statusBadge = 'bg-present'; }
-                    else if(att.status === 'Leave') { leaveCount++; statusBadge = 'bg-warning'; }
-                } else {
-                    absentCount++;
-                }
-
-                rows += `
-                <tr>
-                    <td>${emp.name}</td>
-                    <td>${emp.id}</td>
-                    <td><span class="badge ${statusBadge}">${status}</span></td>
-                    <td>${att ? att.time : '-'}</td>
-                </tr>`;
-            });
-
-            area.innerHTML = `
-                <div class="report-summary-box">
-                    <div class="rep-stat"><h4>${presentCount}</h4><small>Present</small></div>
-                    <div class="rep-stat"><h4>${absentCount}</h4><small>Abs</small></div>
-                    <div class="rep-stat"><h4>${leaveCount}</h4><small>Leave</small></div>
-                </div>
-                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
-            `;
-        }
-
-        function generateMonthlyReport() {
-            const monthVal = document.getElementById('rep-month').value; // YYYY-MM
-            if(!monthVal) return;
-            const area = document.getElementById('monthly-report-area');
-            const [year, month] = monthVal.split('-').map(Number);
-            
-            // Get days in month
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const prefix = `${year}-${String(month).padStart(2,'0')}`;
-            
-            let rows = '';
-
-            state.employees.forEach(emp => {
-                // Calculate stats for this employee
-                let p = 0, l = 0, a = 0;
-                
-                for(let d=1; d<=daysInMonth; d++) {
-                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
-                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
-                    if(att) {
-                        if(att.status === 'Present') p++;
-                        else if(att.status === 'Leave') l++;
-                        else a++;
-                    }
-                }
-                
-                rows += `
-                <tr>
-                    <td>${emp.name}</td>
-                    <td>${p}</td>
-                    <td>${l}</td>
-                    <td>${a}</td>
-                </tr>`;
-            });
-
-            area.innerHTML = `
-                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
-            `;
-        }
-
-        function downloadDailyReportCSV() {
-            const date = document.getElementById('rep-date').value;
-            if(!date) return toast("Select Date");
-            const area = document.getElementById('daily-report-area');
-            const rows = [['Date', 'Name', 'ID', 'Status', 'Time']];
-            
-            state.employees.forEach(emp => {
-                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
-                let status = 'Absent';
-                let statusBadge = 'bg-danger';
-                
-                if(att) {
-                    status = att.status;
-                    if(att.status === 'Present') { statusBadge = 'bg-present'; }
-                    else if(att.status === 'Leave') { statusBadge = 'bg-warning'; }
-                } 
-                rows.push([date, emp.name, emp.id, status, att ? att.time : '-']);
-            });
-            downloadCSV(rows, `Daily_Report_${date}.csv`);
-        }
-
-        function downloadMonthlyReportCSV() {
-            const monthVal = document.getElementById('rep-month').value;
-            if(!monthVal) return toast("Select Month");
-            const [year, month] = monthVal.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const prefix = `${year}-${String(month).padStart(2,'0')}`;
-            
-            const rows = [['Month', 'Emp Name', 'Present', 'Leave', 'Absent', 'Total Days']];
-            
-            state.employees.forEach(emp => {
-                let p = 0, l = 0, a = 0;
-                for(let d=1; d<=daysInMonth; d++) {
-                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
-                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
-                    if(att) {
-                        if(att.status === 'Present') p++;
-                        else if(att.status === 'Leave') l++;
-                    } else {
-                        a++;
-                    }
-                }
-                rows.push([monthVal, emp.name, p, l, a, p+l+a]);
-            });
-            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
-        }
-
-        // --- ADMIN FEATURES ---
-        function loadDash() {
-            document.getElementById('stat-emp').innerText = state.employees.length;
+        function deleteSelectedCheckins() {
+            const checks = document.querySelectorAll('.chk-ci:checked');
+            if(checks.length === 0) return toast("Select records first");
+            if(!confirm(`Delete ${checks.length} records?`)) return;
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('stat-pres').innerText = state.attendance.filter(a => a.date === today && a.status !== 'Leave').length;
-            const pendingLeaves = state.leaves.filter(l => l.status === 'Pending').length;
-            document.getElementById('stat-leaves').innerText = pendingLeaves.length;
-            const targetSelect = document.getElementById('chat-target-adm');
-            let opts = `<option value="ALL">ALL EMPLOYEES</option>`;
-            state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
-            targetSelect.innerHTML = opts;
-            loadOnlineUsers();
-        }
-
-        function loadOnlineUsers() {
-            const list = document.getElementById('online-users-list');
-            const now = Date.now();
-            const onlineThreshold = 5 * 60 * 1000; 
-            const onlineEmployees = state.employees.filter(e => {
-                const lastSeen = state.lastSeen[e.id];
-                return lastSeen && (now - lastSeen < onlineThreshold);
+            checks.forEach(c => {
+                const [date, eid] = c.value.split('_');
+                state.attendance = state.attendance.filter(a => !(a.date === date && a.eid === eid));
             });
-            if(onlineEmployees.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem; padding:10px;'>No employees currently online.</p>";
-            } else {
-                list.innerHTML = onlineEmployees.map(e => `
-                    <div class="online-user-row">
-                        <div class="dot online" style="width:8px; height:8px;"></div>
-                        <div style="font-weight:600; font-size:0.9rem;">${e.name}</div>
-                    </div>
-                `).join('');
-            }
+            saveData(); loadAdminCheckins(); loadDash(); toast("Deleted");
         }
 
-        function loadAdminCheckins() {
-            const filterDate = document.getElementById('ci-filter-date').value;
-            const tbody = document.getElementById('checkins-tbody');
-            const data = state.attendance.filter(a => a.date === filterDate);
-            if(data.length === 0) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No check-ins</td></tr>";
-            else tbody.innerHTML = data.map(a => `
-                <tr>
-                    <td><input type="checkbox" class="chk-ci" value="${a.date}_${a.eid}"></td>
-                    <td><b>${a.name}</b></td>
-                    <td>${a.time}</td>
-                    <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:blue;">Map</a>`}</td>
-                    <td><span class="badge ${a.status === 'Leave' ? 'bg-warning' : 'bg-present'}">${a.status === 'Leave' ? 'Leave' : 'Present'}</span></td>
-                </tr>
-            `).join('');
+        function proxyCheckInAll() {
+            if(!confirm("Check in ALL employees for today as 'Present'?")) return;
+            const today = new Date().toISOString().split('T')[0];
+            const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            state.employees.forEach(e => {
+                if(!state.attendance.find(a => a.eid === e.id && a.date === today)) {
+                    state.attendance.push({
+                        eid: e.id, name: e.name, date: today, time: time, lat: "Proxy", lng: "Proxy", status: "Present"
+                    });
+                }
+            });
+            saveData(); loadAdminCheckins(); loadDash(); toast("All Checked In");
         }
 
         function loadTeam() {
@@ -1879,12 +1949,12 @@
                     </div>
                     <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
                         <div style="display:flex; gap:5px;">
-                            <button class="btn btn-sm btn-outline" onclick="contactViaEmail('${e.mail}')" title="Email"><i class="fas fa-envelope"></i></button>
-                            <button class="btn btn-sm btn-whatsapp" onclick="contactViaWhatsApp('${e.mobile}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                            <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="contactViaEmail('${e.mail}')"><i class="fas fa-envelope"></i></div>
+                            <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="contactViaWhatsApp('${e.mobile}')"><i class="fab fa-whatsapp"></i></div>
                         </div>
-                        <button class="btn btn-sm btn-outline" onclick="downloadEmployee('${e.id}')"><i class="fas fa-download"></i> Data</button>
-                        <button class="btn btn-sm btn-danger" onclick="resetPassword('${e.id}')"><i class="fas fa-key"></i> Pass</button>
-                        <button class="btn btn-sm btn-primary" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="downloadEmployee('${e.id}')"><i class="fas fa-download"></i></div>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="resetPassword('${e.id}')"><i class="fas fa-key"></i></div>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i></div>
                     </div>
                 </div>
             `).join('');
@@ -1901,9 +1971,9 @@
                     <td>${v.ticket}</td>
                     <td>${v.remarks}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="openEditVisitModal(${v.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
+                        <div class="icon-circle" style="width:28px; height:28px; font-size:0.75rem; cursor:pointer;" onclick="openEditVisitModal(${v.id})">
+                            <i class="fas fa-edit"></i> 
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -1969,7 +2039,7 @@
 
         function downloadCSV(data, filename) {
             let csvContent = "data:text/csv;charset=utf-8,";
-            data.forEach(row => { csvContent += row.map(item => `"${item}"`).join(",") + "\r\n"); });
+            data.forEach(row => { csvContent += row.map(item => `"${item}"`).join(",") + "\r\n"; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -2001,4 +2071,337 @@
             const msg = document.getElementById('rem-msg').value;
             if(!msg) return toast("Enter message");
             const notif = { id: Date.now(), message: msg, date: new Date().toLocaleString(), read: false };
-            if(target === 'ALL') { state.notifications.push
+            if(target === 'ALL') { 
+                state.notifications.push(notif); 
+                toast("Sent to All");
+            } else {
+                const emp = state.employees.find(e => e.id === target);
+                if(emp) {
+                    notif.target = emp.id;
+                    state.notifications.push(notif);
+                    toast(`Sent to ${emp.name}`);
+                }
+            }
+            saveData();
+        }
+
+        function sendWhatsApp() {
+            const target = document.getElementById('rem-target').value;
+            const msg = document.getElementById('rem-msg').value;
+            if(!msg) return toast("Enter message");
+            
+            if(target === 'ALL') {
+                let count = 0;
+                state.employees.forEach(e => {
+                    if(e.mobile) {
+                        let clean = e.mobile.replace(/[^0-9]/g, '');
+                        window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+                        count++;
+                    }
+                });
+                toast(`Opened WhatsApp for ${count} employees`);
+            } else {
+                const emp = state.employees.find(e => e.id === target);
+                if(emp && emp.mobile) {
+                    contactViaWhatsApp(emp.mobile + "?text=" + encodeURIComponent(msg));
+                }
+            }
+        }
+
+        // --- EMPLOYEE/ADMIN MODALS ---
+        function showAddModal() {
+            document.getElementById('m-id').value = '';
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-company').value = '';
+            document.getElementById('m-email').value = '';
+            document.getElementById('m-mobile').value = '';
+            document.getElementById('m-photo').value = '';
+            document.getElementById('m-pass').value = '1234';
+            document.getElementById('btn-save-emp').innerText = "Add Employee";
+            document.getElementById('btn-del-emp').style.display = 'none';
+            document.getElementById('modal-title').innerText = "Add Employee";
+            openModal('modal-employee');
+        }
+
+        function editEmployee(id) {
+            const emp = state.employees.find(e => e.id === id);
+            if(!emp) return;
+            document.getElementById('m-id').value = emp.id;
+            document.getElementById('m-id').readOnly = true;
+            document.getElementById('m-name').value = emp.name;
+            document.getElementById('m-company').value = emp.company;
+            document.getElementById('m-email').value = emp.mail;
+            document.getElementById('m-mobile').value = emp.mobile;
+            document.getElementById('m-photo').value = emp.photo || '';
+            document.getElementById('m-pass').value = emp.pass;
+            document.getElementById('btn-save-emp').innerText = "Update Employee";
+            document.getElementById('btn-del-emp').style.display = 'block';
+            document.getElementById('modal-title').innerText = "Edit Employee";
+            openModal('modal-employee');
+        }
+
+        function saveEmployee() {
+            const id = document.getElementById('m-id').value.trim();
+            const name = document.getElementById('m-name').value.trim();
+            const comp = document.getElementById('m-company').value.trim();
+            const mail = document.getElementById('m-email').value.trim();
+            const mobile = document.getElementById('m-mobile').value.trim();
+            const pass = document.getElementById('m-pass').value.trim();
+            const photo = document.getElementById('m-photo').value.trim();
+
+            if(!id || !name) return toast("ID and Name required");
+
+            const existing = state.employees.findIndex(e => e.id === id);
+            if(existing > -1) {
+                // Update
+                state.employees[existing] = { id, name, company: comp, mail, mobile, pass, photo };
+                toast("Employee Updated");
+            } else {
+                // Add
+                state.employees.push({ id, name, company: comp, mail, mobile, pass, photo });
+                toast("Employee Added");
+            }
+            saveData();
+            closeModal('modal-employee');
+            loadTeam();
+        }
+
+        function deleteEmployee() {
+            const id = document.getElementById('m-id').value;
+            if(confirm("Delete this employee?")) {
+                state.employees = state.employees.filter(e => e.id !== id);
+                saveData();
+                closeModal('modal-employee');
+                loadTeam();
+                toast("Deleted");
+            }
+        }
+
+        function showImportModal() {
+            openModal('modal-import');
+        }
+
+        function downloadTemplate() {
+            const headers = ["ID", "Name", "Company", "Email", "Mobile", "Password", "Photo"];
+            const sample = ["103", "Sample User", "Sample Co", "sample@mail.com", "9100000000", "1234", ""];
+            downloadCSV([headers, sample], "employee_template.csv");
+        }
+
+        function processCSV() {
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+            if(!file) return toast("Select a file");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
+                let count = 0;
+                // Skip header (row 0)
+                for(let i=1; i<rows.length; i++) {
+                    const row = rows[i];
+                    if(row.length >= 2 && row[0] !== "") {
+                        const [id, name, company, mail, mobile, pass, photo] = row;
+                        const idx = state.employees.findIndex(e => e.id === id);
+                        const empData = { id, name, company: company||"", mail: mail||"", mobile: mobile||"", pass: pass||"1234", photo: photo||"" };
+                        if(idx > -1) state.employees[idx] = empData;
+                        else state.employees.push(empData);
+                        count++;
+                    }
+                }
+                saveData();
+                closeModal('modal-import');
+                loadTeam();
+                toast(`Processed ${count} employees`);
+                fileInput.value = "";
+            };
+            reader.readAsText(file);
+        }
+
+        // --- NOTIFICATIONS (EMPLOYEE) ---
+        function loadNotifications() {
+            const list = document.getElementById('notifications-list');
+            const myNotifs = state.notifications.filter(n => !n.target || n.target === state.user.id).reverse();
+            if(myNotifs.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No notifications.</p>";
+            } else {
+                list.innerHTML = myNotifs.map(n => `
+                    <div class="notif-item ${n.read ? '' : 'unread'}">
+                        <div style="font-weight:600; font-size:0.95rem;">${n.message}</div>
+                        <div class="notif-meta">${n.date}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function checkUnreadNotifications() {
+            const count = state.notifications.filter(n => (!n.target || n.target === state.user.id) && !n.read).length;
+            // Ideally show badge, but we just use logic here
+        }
+
+        function markAllRead() {
+            state.notifications.forEach(n => {
+                if(!n.target || n.target === state.user.id) n.read = true;
+            });
+            saveData(); loadNotifications();
+        }
+
+        // --- MEETINGS (ADMIN) ---
+        function loadMeetingTargetOptions() {
+            const sel = document.getElementById('meet-target');
+            sel.innerHTML = "<option value=''>Select Employee...</option>" + state.employees.map(e => `<option value='${e.id}'>${e.name}</option>`).join('');
+        }
+
+        function scheduleMeeting() {
+            const title = document.getElementById('meet-title').value;
+            const target = document.getElementById('meet-target').value;
+            const date = document.getElementById('meet-date').value;
+            const time = document.getElementById('meet-time').value;
+            const type = document.getElementById('meet-type').value;
+
+            if(!title || !target || !date || !time) return toast("Fill all fields");
+
+            const emp = state.employees.find(e => e.id === target);
+            if(!emp) return toast("Employee not found");
+
+            const msg = `Meeting: ${title}\nDate: ${date}\nTime: ${time}\nType: ${type}\n\nLink: [Zoom/Meet Link]`;
+            
+            // Add to history
+            state.meetings.push({ id: Date.now(), title, target, targetName: emp.name, date, time, type });
+            
+            // Send WhatsApp
+            if(emp.mobile) {
+                window.open(`https://wa.me/${emp.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                toast("Invitation Sent via WhatsApp");
+            } else {
+                toast("No mobile number for employee");
+            }
+            saveData();
+            loadMeetingsList();
+        }
+
+        function loadMeetingsList() {
+            const list = document.getElementById('meetings-list');
+            if(state.meetings.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999;'>No meetings scheduled.</p>";
+            } else {
+                list.innerHTML = state.meetings.slice().reverse().map(m => `
+                    <div class="card" style="padding:12px; margin-bottom:10px;">
+                        <div style="font-weight:700;">${m.title}</div>
+                        <div style="font-size:0.85rem; color:#666;">With: ${m.targetName}</div>
+                        <div style="font-size:0.85rem;">${m.date} @ ${m.time} (${m.type})</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // --- SETTINGS / UTILS ---
+        function checkPin() {
+            const pass = prompt("Enter Admin Password to access Settings:");
+            if(pass === state.adminProfile.pass) {
+                openSettings();
+            } else if (pass !== null) {
+                toast("Incorrect Password");
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('adm-bin-id').value = state.cloudConfig.binId;
+            document.getElementById('adm-api-key').value = state.cloudConfig.masterKey;
+            document.getElementById('adm-email').value = state.adminProfile.email;
+            document.getElementById('adm-mobile').value = state.adminProfile.mobile;
+            openModal('modal-settings');
+        }
+
+        function saveAdminSettings() {
+            state.cloudConfig.binId = document.getElementById('adm-bin-id').value;
+            state.cloudConfig.masterKey = document.getElementById('adm-api-key').value;
+            state.adminProfile.email = document.getElementById('adm-email').value;
+            state.adminProfile.mobile = document.getElementById('adm-mobile').value;
+            const newPass = document.getElementById('adm-pass').value;
+            if(newPass) state.adminProfile.pass = newPass;
+
+            localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+            localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+            saveData();
+            closeModal('modal-settings');
+            toast("Settings Saved. Reloading...");
+            setTimeout(() => window.location.reload(), 1500);
+        }
+
+        function deleteLeave(id) {
+            if(confirm("Delete this request?")) {
+                state.leaves = state.leaves.filter(l => l.id !== id);
+                saveData();
+                loadAdminApprovals();
+            }
+        }
+
+        function downloadBackup() {
+            const json = JSON.stringify(state, null, 2);
+            const blob = new Blob([json], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `eas_backup_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function loadLocalApp() {
+            const file = document.getElementById('local-app-file').files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.write(e.target.result);
+                    document.close();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function forceAppUpdate() {
+            if('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    reg.unregister().then(() => {
+                        window.location.reload();
+                    });
+                });
+            } else {
+                window.location.reload();
+            }
+        }
+
+        function manualSync() {
+            if(!isJsonSync) return toast("Offline Mode");
+            const btn = document.getElementById('btn-force-sync');
+            btn.classList.add('syncing');
+            pollCloudDatabase().then(() => {
+                setTimeout(() => btn.classList.remove('syncing'), 1000);
+            });
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.style.display = 'flex';
+            setTimeout(()=>m.classList.add('open'),10);
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('open');
+            setTimeout(()=>m.style.display = 'none',300);
+        }
+
+        function handleLocationToggle(el) {
+            const msg = document.getElementById('loc-msg');
+            if(el.checked) {
+                msg.innerText = "📍 Location Active";
+            } else {
+                msg.innerText = "📍 Location Disabled";
+            }
+        }
+    </script>
+</body>
+</html>
