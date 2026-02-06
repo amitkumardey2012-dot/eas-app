@@ -21,7 +21,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v13';
+                const CACHE_NAME = 'eas-pwa-cache-v16';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -288,7 +288,7 @@
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">2.0.0</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">2.0.2</span></div>
             
             <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
@@ -434,16 +434,16 @@
                 </div>
             </div>
 
-            <!-- NEW: QUICK ACTIONS CARD -->
+            <!-- QUICK ACTIONS CARD -->
             <div class="card" style="border: 2px solid rgba(37, 211, 102, 0.3);">
                 <h3><i class="fab fa-whatsapp" style="color:var(--whatsapp); margin-right:8px;"></i> Quick Actions</h3>
-                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Send broadcast reminders to all employees.</p>
+                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Send broadcast reminders via WhatsApp.</p>
                 <button class="btn btn-whatsapp btn-block" onclick="sendBulkAttendanceReminder()">
-                    <i class="fas fa-bell"></i> Send Check-In Reminder (WhatsApp)
+                    <i class="fas fa-bell"></i> Send Check-In Reminder
                 </button>
-                <!-- NEW BUTTON: IMPORTANT GROUP MSG -->
+                <!-- IMPORTANT GROUP MSG BUTTON -->
                 <button class="btn btn-danger btn-block" style="margin-top:10px; background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);" onclick="sendImportantGroupMsg()">
-                    <i class="fas fa-bullhorn"></i> Important Group Msg (UFO Tech Odisha)
+                    <i class="fas fa-bullhorn"></i> Important Group Msg (Admin)
                 </button>
             </div>
         </main>
@@ -749,7 +749,7 @@
             <h2>Admin Settings</h2>
             <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.0</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.2</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -769,7 +769,7 @@
             
             <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Profile</h3>
             <div class="form-group"><label>Email (For Notifications)</label><input type="email" id="adm-email"></div>
-            <div class="form-group"><label>Mobile</label><input type="tel" id="adm-mobile"></div>
+            <div class="form-group"><label>Mobile (WhatsApp)</label><input type="tel" id="adm-mobile"></div>
             <div class="form-group"><label>Admin Password</label><input type="password" id="adm-pass" placeholder="New Password"></div>
             
             <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="saveAdminSettings()">Save All Settings</button>
@@ -789,9 +789,10 @@
 
     <script>
         // --- CONFIGURATION ---
-        const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
-        const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
-        const APP_VERSION = "2.0.0";
+        const DEFAULT_BIN_ID = ""; // UPDATED: Empty to force offline
+        const DEFAULT_API_KEY = ""; // UPDATED: Empty to force offline
+        const APP_VERSION = "2.0.2";
+        const DEFAULT_ADMIN_MOBILE = "7381345000"; // UPDATED ADMIN MOBILE
 
         // AUTOMATED EMAIL CONFIG
         const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
@@ -813,7 +814,7 @@
             notifications: [],
             messages: [],
             meetings: [],
-            adminProfile: { email: "admin@eas.com", mobile: "9999999999", pass: "admin", lockKey: "" },
+            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "" }, // UPDATED DEFAULT MOBILE
             cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
             lastSeen: {}, 
             lastModified: 0,
@@ -1357,41 +1358,25 @@
             }
         }
 
-        // --- NEW: SEND IMPORTANT GROUP MSG (ADMIN) ---
+        // --- UPDATED: IMPORTANT GROUP MSG (ADMIN) ---
         function sendImportantGroupMsg() {
             const message = prompt("Enter Important Message for UFO Tech Odisha Group:");
             if(!message) return;
 
-            const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
-            const count = employeesWithMobile.length;
+            const adminMobile = state.adminProfile.mobile || DEFAULT_ADMIN_MOBILE; // Use Admin's number
 
-            if(count === 0) return toast("No employees with mobile numbers found.");
+            if(!confirm(`Prepare Group Message via Admin WhatsApp (${adminMobile})?\n\nNote: This will open a chat with the Admin number pre-filled with the message. Please copy it and send to your WhatsApp Group.`)) return;
 
-            if(!confirm(`Send Important Message to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
-
-            let sentCount = 0;
-            // Loop with 1 second delay
-            const interval = setInterval(() => {
-                if(sentCount >= employeesWithMobile.length) {
-                    clearInterval(interval);
-                    toast(`Important message sent to ${sentCount} employees.`);
-                    return;
-                }
-                
-                const emp = employeesWithMobile[sentCount];
-                const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
-                // Prepend group tag
-                const fullMsg = `[UFO Tech Odisha] IMPORTANT: ${message}`;
-                const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(fullMsg)}`;
-                window.open(url, '_blank');
-                
-                sentCount++;
-            }, 1000);
+            const url = `https://wa.me/${adminMobile}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+            toast("Opened WhatsApp with Admin. Copy and send to group.");
         }
 
-        // --- SEND ATTENDANCE REMINDER (ADMIN) ---
+        // --- UPDATED: SEND ATTENDANCE REMINDER (ADMIN) ---
         function sendBulkAttendanceReminder() {
-            const message = "⏰ Reminder: Please mark your Check-In now via EAS App.";
+            // UPDATED DEFAULT MESSAGE
+            const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM. Your check-in time and location will be recorded automatically.";
+            
             const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
             const count = employeesWithMobile.length;
 
