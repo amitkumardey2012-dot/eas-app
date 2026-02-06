@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#4e54c8">
-    <title>Employee Attendance System (EAS)</title>
+    <title>EAS (Tech Odisha)</title>
     
     <!-- PWA / MOBILE APP CAPABILITIES -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-cache-v11';
+                const CACHE_NAME = 'eas-pwa-cache-v13';
                 self.addEventListener('install', event => {
                     self.skipWaiting(); 
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
@@ -41,7 +41,7 @@
     <style>
         /* --- CSS VARIABLES & RESET --- */
         :root {
-            /* NEW COLOR PALETTE (Fresh Indigo/Ocean Theme) */
+            /* COLOR PALETTE (Fresh Indigo/Ocean Theme) */
             --primary: #4e54c8;
             --primary-grad: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); 
             --secondary: #11998e;
@@ -52,7 +52,7 @@
             --danger-grad: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
             --warning: #f7971e;
             
-            /* NEW FONT */
+            /* FONT */
             --font-family: 'Poppins', sans-serif;
             
             --text-main: #2d3436;
@@ -68,7 +68,7 @@
 
         body { 
             margin: 0; font-family: var(--font-family); 
-            /* NEW BACKGROUND ANIMATION */
+            /* BACKGROUND ANIMATION */
             background: linear-gradient(-45deg, #4e54c8, #8f94fb, #a18cd1, #fbc2eb);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
@@ -219,8 +219,9 @@
         .stat-card { background: rgba(255,255,255,0.4); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.6); cursor: pointer; transition: 0.2s; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); backdrop-filter: blur(10px); }
         .dashboard-sync-status { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; font-weight: 600; padding: 15px; background: rgba(255,255,255,0.4); border-radius: 15px; margin-top: 10px; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: rgba(255,255,255,0.4); border-radius: 15px; overflow: hidden; }
-        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom:1px solid rgba(255,255,255,0.4); }
-        .data-table th { background: rgba(78, 84, 200, 0.1); color: var(--primary); font-weight: 700; }
+        .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom:1px solid rgba(255,255,255,0.4); }
+        .data-table th { background: rgba(78, 84, 200, 0.1); color: var(--primary); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        .data-table tr:last-child td { border-bottom: none; }
         .notif-item { background: rgba(255,255,255,0.6); padding: 12px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
         .notif-item.unread { background: rgba(78, 84, 200, 0.1); border-left-color: var(--warning); }
         .notif-meta { font-size: 0.7rem; color: #888; margin-top: 5px; }
@@ -267,7 +268,7 @@
                  </div>
             </div>
             
-            <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:25px; font-size:1.7rem; font-weight:700;">EAS</h1>
+            <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:25px; font-size:1.7rem; font-weight:700;">EAS (Tech Odisha)</h1>
             <p style="margin-top:-20px; margin-bottom:20px; color:#666; font-weight:500;">Employee Attendance</p>
             
             <div class="login-tabs">
@@ -287,7 +288,7 @@
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">1.8.0</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">2.0.0</span></div>
             
             <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
@@ -374,7 +375,8 @@
                     <input type="month" id="hist-month" onchange="loadHistory()">
                     <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
                 </div>
-                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Status</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
+                <!-- UPDATED TABLE STYLE -->
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Status</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
             </div>
         </main>
 
@@ -430,6 +432,19 @@
                         <small>Present Today</small>
                     </div>
                 </div>
+            </div>
+
+            <!-- NEW: QUICK ACTIONS CARD -->
+            <div class="card" style="border: 2px solid rgba(37, 211, 102, 0.3);">
+                <h3><i class="fab fa-whatsapp" style="color:var(--whatsapp); margin-right:8px;"></i> Quick Actions</h3>
+                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Send broadcast reminders to all employees.</p>
+                <button class="btn btn-whatsapp btn-block" onclick="sendBulkAttendanceReminder()">
+                    <i class="fas fa-bell"></i> Send Check-In Reminder (WhatsApp)
+                </button>
+                <!-- NEW BUTTON: IMPORTANT GROUP MSG -->
+                <button class="btn btn-danger btn-block" style="margin-top:10px; background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);" onclick="sendImportantGroupMsg()">
+                    <i class="fas fa-bullhorn"></i> Important Group Msg (UFO Tech Odisha)
+                </button>
             </div>
         </main>
 
@@ -610,7 +625,7 @@
         </main>
 
         <main id="view-reminders">
-            <h2 style="font-size:1.2rem; margin-bottom:15px;">Send Reminders</h2>
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Send Custom Reminders</h2>
             <div class="card">
                 <div class="form-group"><label>Target Employee</label><select id="rem-target"><option value="ALL">ALL Employees</option></select></div>
                 <div class="form-group"><label>Message</label><textarea id="rem-msg" rows="3" placeholder="e.g. Check in by 10 AM."></textarea></div>
@@ -734,7 +749,7 @@
             <h2>Admin Settings</h2>
             <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">1.8.0</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.0</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -776,7 +791,10 @@
         // --- CONFIGURATION ---
         const DEFAULT_BIN_ID = "69839789d0ea881f40a1013c"; 
         const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
-        const APP_VERSION = "1.8.0";
+        const APP_VERSION = "2.0.0";
+
+        // AUTOMATED EMAIL CONFIG
+        const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
         let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
@@ -798,17 +816,19 @@
             adminProfile: { email: "admin@eas.com", mobile: "9999999999", pass: "admin", lockKey: "" },
             cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
             lastSeen: {}, 
-            lastModified: 0
+            lastModified: 0,
+            autoEmailStatus: { lastDailyDate: null, lastMonthlyDate: null }
         };
         
         let isJsonSync = false;
         let syncInterval = null;
         let heartbeatInterval = null;
         let autoReminderInterval = null;
+        let autoEmailTimer = null;
 
         const getAvatar = (name) => `https://picsum.photos/seed/${name}/200/200.jpg`;
 
-        // --- UPDATED: LOAD DATA IMMEDIATELY ---
+        // --- LOAD DATA IMMEDIATELY ---
         window.onload = () => {
             // 1. Set UI Version
             if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
@@ -821,7 +841,7 @@
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             
-            // ADD: Initialize Company Report Date (keep existing)
+            // Initialize Company Report Date
             const repMonthInput = document.getElementById('rep-comp-month');
             if(repMonthInput) {
                  repMonthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -847,7 +867,7 @@
             checkJsonStatus(); 
         };
 
-        // --- UPDATED: ROBUST CLOUD CHECK WITH TIMEOUT ---
+        // --- ROBUST CLOUD CHECK WITH TIMEOUT ---
         function checkJsonStatus() {
             // Load keys
             if(state.cloudConfig && state.cloudConfig.binId) {
@@ -894,6 +914,7 @@
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
+                    if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
                     // Merge cloud data if it is newer
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
@@ -904,6 +925,7 @@
                     }
                 }
                 startAutoSync();
+                startAutoEmailScheduler(); // NEW
             })
             .catch(() => {
                 // If fetch fails or times out, fall back to Local Mode
@@ -938,10 +960,103 @@
             if (window.syncInterval) clearInterval(window.syncInterval);
             if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (autoReminderInterval) clearInterval(autoReminderInterval);
+            if (autoEmailTimer) clearInterval(autoEmailTimer);
             if(document.getElementById('dash-sync-dot')) {
                 document.getElementById('dash-sync-dot').className = 'dot large offline';
                 document.getElementById('dash-sync-text').innerText = "Offline";
             }
+        }
+
+        // --- NEW: AUTO EMAIL SCHEDULER ---
+        function startAutoEmailScheduler() {
+            if(autoEmailTimer) clearInterval(autoEmailTimer);
+            // Check every 60 seconds
+            autoEmailTimer = setInterval(checkAutoEmailTrigger, 60000);
+        }
+
+        function checkAutoEmailTrigger() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const date = now.getDate();
+            const todayStr = now.toDateString();
+
+            // Daily Trigger: 12:05 PM (12:05)
+            // Logic: If time is 12:05 AND we haven't sent it today yet
+            if (hours === 12 && minutes === 5 && state.autoEmailStatus.lastDailyDate !== todayStr) {
+                console.log("Triggering Daily Auto Email...");
+                generateAndMailDailyReport();
+                state.autoEmailStatus.lastDailyDate = todayStr;
+                saveData(); // Save status so we don't send it twice today
+            }
+
+            // Monthly Trigger: 1st of next month at 10:00 AM
+            // Logic: If date is 1 AND time is 10:00 AND we haven't sent it this month
+            if (date === 1 && hours === 10 && minutes === 0) {
+                const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+                if(state.autoEmailStatus.lastMonthlyDate !== monthStr) {
+                    console.log("Triggering Monthly Auto Email...");
+                    generateAndMailMonthlyReport();
+                    state.autoEmailStatus.lastMonthlyDate = monthStr;
+                    saveData();
+                }
+            }
+        }
+
+        function generateAndMailDailyReport() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            
+            // 1. Generate CSV Data
+            let csvContent = "Date,Name,ID,Status,Time\n";
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === dateStr);
+                let status = 'Absent';
+                if(att) {
+                    status = att.status;
+                }
+                csvContent += `${dateStr},${emp.name},${emp.id},${status},${att ? att.time : '-'}\n`;
+            });
+
+            // 2. Prepare Mailto
+            const subject = encodeURIComponent(`Daily Attendance Report - ${dateStr}`);
+            const body = encodeURIComponent(`Please find the Daily Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
+            
+            // 3. Open
+            window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
+            alert("⏰ Auto-Email Triggered: Daily Report email draft opened.");
+        }
+
+        function generateAndMailMonthlyReport() {
+            const now = new Date();
+            const monthVal = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`; // Previous month
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            // 1. Generate CSV Data
+            let csvContent = "Month,Emp Name,Present,Leave,Absent,Total Days\n";
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                csvContent += `${monthVal},${emp.name},${p},${l},${a},${p+l+a}\n`;
+            });
+
+            // 2. Prepare Mailto
+            const subject = encodeURIComponent(`Monthly Attendance Report - ${monthVal}`);
+            const body = encodeURIComponent(`Please find the Monthly Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
+            
+            // 3. Open
+            window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
+            alert("⏰ Auto-Email Triggered: Monthly Report email draft opened.");
         }
 
         // --- AUTOMATIC 5 MIN REMINDER ---
@@ -987,6 +1102,7 @@
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
+                    if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly(); 
@@ -1060,6 +1176,7 @@
                     state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
                     state.lastSeen = parsed.lastSeen || {};
                     state.lastModified = parsed.lastModified || 0;
+                    state.autoEmailStatus = parsed.autoEmailStatus || { lastDailyDate: null, lastMonthlyDate: null };
                 } catch (e) {
                     console.error("Local data corrupted", e);
                     state.employees = []; state.lastModified = 0;
@@ -1180,7 +1297,7 @@
             if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
             const titles = {
                 'view-home': 'Home', 'view-visits-emp': 'Visits', 'view-history': 'History', 'view-notifications': 'Alerts',
-                'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'view-reminders',
+                'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'Reminders',
                 'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Mgmt', 'view-reports': 'Reports', 'view-meetings': 'Meets'
             };
             document.getElementById('page-title').innerText = titles[id];
@@ -1238,6 +1355,66 @@
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/2919/2919600.png" });
             }
+        }
+
+        // --- NEW: SEND IMPORTANT GROUP MSG (ADMIN) ---
+        function sendImportantGroupMsg() {
+            const message = prompt("Enter Important Message for UFO Tech Odisha Group:");
+            if(!message) return;
+
+            const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+            const count = employeesWithMobile.length;
+
+            if(count === 0) return toast("No employees with mobile numbers found.");
+
+            if(!confirm(`Send Important Message to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
+
+            let sentCount = 0;
+            // Loop with 1 second delay
+            const interval = setInterval(() => {
+                if(sentCount >= employeesWithMobile.length) {
+                    clearInterval(interval);
+                    toast(`Important message sent to ${sentCount} employees.`);
+                    return;
+                }
+                
+                const emp = employeesWithMobile[sentCount];
+                const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                // Prepend group tag
+                const fullMsg = `[UFO Tech Odisha] IMPORTANT: ${message}`;
+                const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(fullMsg)}`;
+                window.open(url, '_blank');
+                
+                sentCount++;
+            }, 1000);
+        }
+
+        // --- SEND ATTENDANCE REMINDER (ADMIN) ---
+        function sendBulkAttendanceReminder() {
+            const message = "⏰ Reminder: Please mark your Check-In now via EAS App.";
+            const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+            const count = employeesWithMobile.length;
+
+            if(count === 0) return toast("No employees with mobile numbers found.");
+
+            if(!confirm(`Send Check-In Reminder to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
+
+            let sentCount = 0;
+            // Loop with 1 second delay
+            const interval = setInterval(() => {
+                if(sentCount >= employeesWithMobile.length) {
+                    clearInterval(interval);
+                    toast(`Sent reminders to ${sentCount} employees.`);
+                    return;
+                }
+                
+                const emp = employeesWithMobile[sentCount];
+                const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                
+                sentCount++;
+            }, 1000);
         }
 
         // --- EMPLOYEE FEATURES ---
@@ -1301,7 +1478,7 @@
             state.leaves.push({ id: leaveId, eid: state.user.id, name: state.user.name, from: f, to: t, reason: r, status: 'Pending' });
             if(state.adminProfile.email) {
                 const subject = encodeURIComponent(`Leave Request: ${state.user.name} (${f} to ${t})`);
-                const body = encodeURIComponent(`Employee ID: ${state.user.id}\nName: ${state.user.name}\nDates: ${f} to ${t}\nReason: ${r}\n\nPlease approve/reject via the EAS App.`);
+                const body = encodeURIComponent(`Employee ID: ${state.user.id}\nName: ${state.user.name}\nDates: ${f} to ${t}\nReason: ${r}\n\nPlease approve/reject via EAS App.`);
                 window.open(`mailto:${state.adminProfile.email}?subject=${subject}&body=${body}`, '_blank');
             } else {
                 toast("Leave Applied (Admin Email not set)");
@@ -1360,7 +1537,7 @@
             const tbody = document.getElementById('history-tbody');
             const myAtt = state.attendance.filter(a => a.eid === state.user.id && a.date.startsWith(monthVal));
             if(myAtt.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='3' style='text-align:center'>No records</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No records</td></tr>";
             } else {
                 tbody.innerHTML = myAtt.map(a => {
                     let badgeClass = 'bg-present';
@@ -1370,6 +1547,7 @@
                         <tr>
                             <td>${a.date}</td>
                             <td>${a.time}</td>
+                            <td style="font-size:0.8rem;">${a.lat.substring(0,8)}...</td>
                             <td><span class="badge ${badgeClass}">${badgeText}</span></td>
                         </tr>
                     `;
@@ -1481,7 +1659,7 @@
             }
         }
 
-        // --- REPORTS LOGIC (UPDATED) ---
+        // --- REPORTS LOGIC (UPDATED FORMAT) ---
         function generateCompanyReport() {
             const monthVal = document.getElementById('rep-comp-month').value; // YYYY-MM
             const selectedComp = document.getElementById('rep-comp-select').value; // Get selected company
@@ -1656,6 +1834,9 @@
             const prefix = `${year}-${String(month).padStart(2,'0')}`;
             
             let rows = '';
+            let grandTotalPresent = 0;
+            let grandTotalAbsent = 0;
+            let grandTotalLeave = 0;
 
             state.employees.forEach(emp => {
                 // Calculate stats for this employee
@@ -1671,6 +1852,12 @@
                         a++;
                     }
                 }
+
+                grandTotalPresent += p;
+                grandTotalLeave += l;
+                grandTotalAbsent += a;
+                
+                const attPct = ((p+l)/(p+l+a)*100).toFixed(1);
                 
                 rows += `
                 <tr>
@@ -1679,11 +1866,17 @@
                     <td>${l}</td>
                     <td>${a}</td>
                     <td>${p+l+a}</td>
+                    <td>${attPct}%</td>
                 </tr>`;
             });
 
             area.innerHTML = `
-                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th></tr></thead><tbody>${rows}</tbody></table></div>
+                <div class="report-summary-box" style="margin-bottom:15px;">
+                    <div class="rep-stat"><h4>${grandTotalPresent}</h4><small>Present</small></div>
+                    <div class="rep-stat"><h4>${grandTotalAbsent}</h4><small>Abs</small></div>
+                    <div class="rep-stat"><h4>${grandTotalLeave}</h4><small>Leave</small></div>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th><th>Att %</th></tr></thead><tbody>${rows}</tbody></table></div>
             `;
         }
 
@@ -1730,7 +1923,7 @@
                 }
                 rows.push([monthVal, emp.name, p, l, a, p+l+a]);
             });
-            downloadCSV([headers, ...rows], `Monthly_Report_${monthVal}.csv`);
+            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
         }
 
         // --- CHAT ENGINE ---
@@ -1826,7 +2019,7 @@
             } else {
                 list.innerHTML = myMsgs.map(m => {
                     const isMine = m.sender === state.user.id;
-                    // Determine label for the bubble
+                    // Determine label for bubble
                     let label = isMine ? 'You' : m.senderName;
                     if(m.target === 'ALL') label = `${m.senderName} (All)`;
                     
@@ -2091,15 +2284,21 @@
             if(!msg) return toast("Enter message");
             
             if(target === 'ALL') {
-                let count = 0;
-                state.employees.forEach(e => {
-                    if(e.mobile) {
-                        let clean = e.mobile.replace(/[^0-9]/g, '');
-                        window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
-                        count++;
+                // Updated to use delayed loop
+                let i = 0;
+                const interval = setInterval(() => {
+                    if(i >= state.employees.length) {
+                        clearInterval(interval);
+                        return;
                     }
-                });
-                toast(`Opened WhatsApp for ${count} employees`);
+                    const emp = state.employees[i];
+                    if(emp.mobile) {
+                        let clean = emp.mobile.replace(/[^0-9]/g, '');
+                        window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+                    }
+                    i++;
+                }, 1000);
+                toast(`Opened WhatsApp for employees.`);
             } else {
                 const emp = state.employees.find(e => e.id === target);
                 if(emp && emp.mobile) {
