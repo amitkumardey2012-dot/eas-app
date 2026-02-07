@@ -288,7 +288,7 @@
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">2.0.3</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">2.0.4</span></div>
             
             <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
@@ -619,6 +619,14 @@
                         <option value="Video">Video Call</option>
                     </select>
                 </div>
+                <!-- NEW CHECKBOX FOR GROUP REDIRECT -->
+                <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+                    <label class="switch" style="margin:0;">
+                        <input type="checkbox" id="meet-to-group-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Redirect to EAS Group instead?</span>
+                </div>
                 <button class="btn btn-primary btn-block" onclick="scheduleMeeting()"><i class="fas fa-calendar-plus"></i> Schedule Meeting</button>
             </div>
 
@@ -751,7 +759,7 @@
             <h2>Admin Settings</h2>
             <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.3</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.4</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -773,6 +781,13 @@
             <div class="form-group"><label>Email (For Notifications)</label><input type="email" id="adm-email"></div>
             <div class="form-group"><label>Mobile (WhatsApp)</label><input type="tel" id="adm-mobile"></div>
             <div class="form-group"><label>Admin Password</label><input type="password" id="adm-pass" placeholder="New Password"></div>
+
+            <!-- NEW: WHATSAPP GROUP LINK SETTING -->
+            <div class="form-group">
+                <label>WhatsApp Group Invite Link (e.g., https://chat.whatsapp.com/invite/...)</label>
+                <input type="url" id="adm-group-link" placeholder="Paste Invite Link Here">
+                <small style="color:var(--text-light); font-size:0.75rem;">If set, Check-In & Important Msgs will open this group directly.</small>
+            </div>
             
             <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="saveAdminSettings()">Save All Settings</button>
         </div>
@@ -793,7 +808,7 @@
         // --- CONFIGURATION ---
         const DEFAULT_BIN_ID = ""; 
         const DEFAULT_API_KEY = "";
-        const APP_VERSION = "2.0.3";
+        const APP_VERSION = "2.0.4";
         const DEFAULT_ADMIN_MOBILE = "7381345000"; 
 
         const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
@@ -815,7 +830,7 @@
             notifications: [],
             messages: [],
             meetings: [],
-            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "" }, 
+            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "", groupLink: "" }, // NEW: groupLink added
             cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
             lastSeen: {}, 
             lastModified: 0,
@@ -903,7 +918,10 @@
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
+                    // Merge admin profile to capture Group Link
+                    if(data.record.adminProfile) state.adminProfile.groupLink = data.record.adminProfile.groupLink || "";
                     if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
+
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly();
@@ -1067,7 +1085,12 @@
                         JSONBIN_ID = state.cloudConfig.binId;
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
+                    // Update Group Link from Cloud
+                    if(data.record.adminProfile && data.record.adminProfile.groupLink) {
+                         state.adminProfile.groupLink = data.record.adminProfile.groupLink;
+                    }
                     if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
+
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly(); 
@@ -1120,7 +1143,7 @@
             if(cloud.notifications) state.notifications = cloud.notifications;
             if(cloud.messages) state.messages = cloud.messages;
             if(cloud.meetings) state.meetings = cloud.meetings || [];
-            if(cloud.adminProfile) state.adminProfile = cloud.adminProfile;
+            if(cloud.adminProfile) state.adminProfile = { ...state.adminProfile, ...cloud.adminProfile };
             if(cloud.lastSeen) state.lastSeen = cloud.lastSeen;
             state.lastModified = cloud.lastModified;
         }
@@ -1322,20 +1345,26 @@
 
         // --- UPDATED: IMPORTANT GROUP MSG (ADMIN) ---
         function sendImportantGroupMsg() {
-            const message = prompt("Enter Important Message for UFO Tech Odisha Group:");
+            const message = prompt("Enter Important Message for EAS Group:");
             if(!message) return;
 
-            const adminMobile = state.adminProfile.mobile || DEFAULT_ADMIN_MOBILE; 
+            // PRIORITY 1: Check if Group Link is set
+            const groupLink = state.adminProfile.groupLink;
+            if(groupLink) {
+                // DIRECT REDIRECT TO GROUP
+                window.open(groupLink, '_blank');
+                toast("Opened EAS Group. Please paste message.");
+                return; 
+            }
 
-            // NEW LOGIC: Ask Admin to choose mode
-            const sendIndividual = confirm("Send Mode:\n\nClick [OK] to send INDIVIDUALLY to all employees.\nClick [CANCEL] to Copy message for Group Chat.");
+            // FALLBACK 2: Existing Logic (Individual Blast)
+            // We ask user if they still want to blast individually since no group link is set
+            const sendIndividual = confirm("No Group Link saved in Settings.\n\nSend INDIVIDUALLY to all employees instead?");
 
             if(sendIndividual) {
-                // INDIVIDUAL BLAST MODE
                 const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
                 if(employeesWithMobile.length === 0) return toast("No employees with mobile numbers found.");
-
-                if(!confirm(`Send Important Message to ${employeesWithMobile.length} employees individually? This will open multiple windows.`)) return;
+                if(!confirm(`Send Important Message to ${employeesWithMobile.length} employees individually?`)) return;
 
                 let sentCount = 0;
                 const interval = setInterval(() => {
@@ -1351,26 +1380,42 @@
                     sentCount++;
                 }, 1000); 
                 toast("Sending messages to all employees...");
-
             } else {
-                // GROUP CHAT MODE (Original Logic)
-                if(!confirm(`Prepare Group Message via Admin WhatsApp (${adminMobile})?\n\nNote: This will open a chat with Admin number pre-filled with the message. Please copy it and send to your WhatsApp Group.`)) return;
-
-                const url = `https://wa.me/${adminMobile}?text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-                toast("Opened WhatsApp with Admin. Copy and send to group.");
+                toast("Cancelled.");
             }
         }
 
+        // --- UPDATED: BULK REMINDER (ADMIN) ---
         function sendBulkAttendanceReminder() {
-            const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM. Your check-in time and location will be recorded automatically.";
-            
+            // PRIORITY 1: Check if Group Link is set
+            const groupLink = state.adminProfile.groupLink;
+            if(groupLink) {
+                // DIRECT REDIRECT TO GROUP
+                const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM.";
+                // We cannot prefill text in WhatsApp groups, but we can try to copy it
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(message).then(() => {
+                        window.open(groupLink, '_blank');
+                        toast("Message Copied & Group Opened.");
+                    }).catch(() => {
+                         window.open(groupLink, '_blank');
+                         toast("Group Opened. Please type message.");
+                    });
+                } else {
+                    // Fallback if clipboard not supported
+                    window.open(groupLink, '_blank');
+                    toast("Group Opened. Please type reminder message.");
+                }
+                return;
+            }
+
+            // FALLBACK 2: Individual Blast
+            const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM.";
             const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
             const count = employeesWithMobile.length;
 
             if(count === 0) return toast("No employees with mobile numbers found.");
-
-            if(!confirm(`Send Check-In Reminder to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
+            if(!confirm(`Send Check-In Reminder to ${count} employees individually?`)) return;
 
             let sentCount = 0;
             const interval = setInterval(() => {
@@ -1382,8 +1427,7 @@
                 
                 const emp = employeesWithMobile[sentCount];
                 const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
-                const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
+                window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`, '_blank');
                 
                 sentCount++;
             }, 1000);
@@ -2009,7 +2053,7 @@
         function loadOnlineUsers() {
             const list = document.getElementById('online-users-list');
             const now = Date.now();
-            const onlineThreshold = 5 * 60 * 1000; 
+            const onlineThreshold =5 * 60 * 1000; 
             const onlineEmployees = state.employees.filter(e => {
                 const lastSeen = state.lastSeen[e.id];
                 return lastSeen && (now - lastSeen < onlineThreshold);
@@ -2403,11 +2447,40 @@
             const date = document.getElementById('meet-date').value;
             const time = document.getElementById('meet-time').value;
             const type = document.getElementById('meet-type').value;
+            const toGroup = document.getElementById('meet-to-group-toggle').checked;
 
-            if(!title || !target || !date || !time) return toast("Fill all fields");
+            if(!title || !date || !time) return toast("Fill all fields");
 
             const msg = `Meeting: ${title}\nDate: ${date}\nTime: ${time}\nType: ${type}\n\nLink: [Zoom/Meet Link]`;
 
+            // NEW LOGIC: GROUP REDIRECT
+            if(toGroup) {
+                const groupLink = state.adminProfile.groupLink;
+                if(groupLink) {
+                    // Just open the group
+                    window.open(groupLink, '_blank');
+                    toast("Opened EAS Group.");
+                    
+                    // Save Meeting
+                    state.meetings.push({ 
+                        id: Date.now(), 
+                        title: title + " (Group)", 
+                        target: 'ALL', 
+                        targetName: 'EAS Group', 
+                        date, 
+                        time, 
+                        type 
+                    });
+                    saveData();
+                    loadMeetingsList();
+                    return;
+                } else {
+                    toast("Please save Group Link in Settings to use this feature.");
+                    return;
+                }
+            }
+
+            // EXISTING INDIVIDUAL LOGIC
             if(target === 'ALL') {
                 // 1. CHECK FOR MOBILE NUMBERS
                 const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
@@ -2494,6 +2567,8 @@
             document.getElementById('adm-api-key').value = state.cloudConfig.masterKey;
             document.getElementById('adm-email').value = state.adminProfile.email;
             document.getElementById('adm-mobile').value = state.adminProfile.mobile;
+            // NEW: Load Group Link
+            document.getElementById('adm-group-link').value = state.adminProfile.groupLink || "";
             openModal('modal-settings');
         }
 
@@ -2502,6 +2577,9 @@
             state.cloudConfig.masterKey = document.getElementById('adm-api-key').value;
             state.adminProfile.email = document.getElementById('adm-email').value;
             state.adminProfile.mobile = document.getElementById('adm-mobile').value;
+            // NEW: Save Group Link
+            state.adminProfile.groupLink = document.getElementById('adm-group-link').value;
+            
             const newPass = document.getElementById('adm-pass').value;
             if(newPass) state.adminProfile.pass = newPass;
 
