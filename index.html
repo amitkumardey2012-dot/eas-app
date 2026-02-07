@@ -288,7 +288,7 @@
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
             
-            <div class="app-version-tag">Version <span id="app-version-login">2.0.2</span></div>
+            <div class="app-version-tag">Version <span id="app-version-login">2.0.3</span></div>
             
             <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
                  <div class="dot" id="login-sync-dot"></div> 
@@ -604,7 +604,9 @@
                 <div class="form-group">
                     <label>Target Employee</label>
                     <select id="meet-target">
-                        <option value="">Select Employee...</option>
+                        <!-- UPDATED: Added ALL Option -->
+                        <option value="ALL">ALL EMPLOYEES (Broadcast)</option>
+                        <!-- JS will append individual employees here -->
                     </select>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -749,7 +751,7 @@
             <h2>Admin Settings</h2>
             <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
                 <small style="color:#666;">Current App Version</small><br>
-                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.2</strong>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.3</strong>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
@@ -758,7 +760,7 @@
             </div>
 
             <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Local App Update</h3>
-            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Load a new HTML file from your device to update the app instantly (Session only).</p>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Load a new HTML file from your device to update app instantly (Session only).</p>
             <div class="form-group"><label>Select new index.html</label><input type="file" id="local-app-file" accept=".html"></div>
             <button class="btn btn-warning btn-block" onclick="loadLocalApp()"><i class="fas fa-upload"></i> Load & Restart App</button>
 
@@ -789,12 +791,11 @@
 
     <script>
         // --- CONFIGURATION ---
-        const DEFAULT_BIN_ID = ""; // UPDATED: Empty to force offline
-        const DEFAULT_API_KEY = ""; // UPDATED: Empty to force offline
-        const APP_VERSION = "2.0.2";
-        const DEFAULT_ADMIN_MOBILE = "7381345000"; // UPDATED ADMIN MOBILE
+        const DEFAULT_BIN_ID = ""; 
+        const DEFAULT_API_KEY = "";
+        const APP_VERSION = "2.0.3";
+        const DEFAULT_ADMIN_MOBILE = "7381345000"; 
 
-        // AUTOMATED EMAIL CONFIG
         const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
 
         let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
@@ -814,7 +815,7 @@
             notifications: [],
             messages: [],
             meetings: [],
-            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "" }, // UPDATED DEFAULT MOBILE
+            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "" }, 
             cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
             lastSeen: {}, 
             lastModified: 0,
@@ -829,48 +830,38 @@
 
         const getAvatar = (name) => `https://picsum.photos/seed/${name}/200/200.jpg`;
 
-        // --- LOAD DATA IMMEDIATELY ---
         window.onload = () => {
-            // 1. Set UI Version
             if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
             if(document.getElementById('settings-version-display')) document.getElementById('settings-version-display').innerText = APP_VERSION;
 
-            // 2. Initialize Dates
             document.getElementById('today-date').innerText = new Date().toDateString();
             document.getElementById('v-date').valueAsDate = new Date();
             document.getElementById('ci-filter-date').valueAsDate = new Date();
             const d = new Date();
             document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             
-            // Initialize Company Report Date
             const repMonthInput = document.getElementById('rep-comp-month');
             if(repMonthInput) {
                  repMonthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             }
             
-            document.getElementById('rep-date').valueAsDate = new Date(); // Pre-fill Daily Report with today
-            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; // Pre-fill Monthly Report with current month
+            document.getElementById('rep-date').valueAsDate = new Date(); 
+            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; 
 
-            // 3. Load Local Data IMMEDIATELY (Do not wait for cloud)
             loadDataLocalOnly();
             
-            // 4. CRITICAL: If local employees are empty, load defaults instantly so login works offline
             if(state.employees.length === 0) {
                 state.employees = DEFAULT_EMPLOYEES;
-                saveDataLocalOnly(); // Save defaults to local storage
+                saveDataLocalOnly(); 
             }
 
-            // 5. Enable UI immediately
             switchLogin('emp'); 
             requestNotificationPermission();
 
-            // 6. Check Cloud in background (with a 5 second timeout safety net)
             checkJsonStatus(); 
         };
 
-        // --- ROBUST CLOUD CHECK WITH TIMEOUT ---
         function checkJsonStatus() {
-            // Load keys
             if(state.cloudConfig && state.cloudConfig.binId) {
                 JSONBIN_ID = state.cloudConfig.binId;
                 JSONBIN_KEY = state.cloudConfig.masterKey;
@@ -881,18 +872,15 @@
                 JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
             }
 
-            // If keys are default/missing, go straight to Local Mode
             if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
                 setLocalModeUI();
                 return;
             }
 
-            // Create a timeout promise (5 seconds)
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error("Cloud Timeout")), 5000)
             );
 
-            // Race between Fetch and Timeout
             Promise.race([
                 fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } }),
                 timeoutPromise
@@ -916,7 +904,6 @@
                         JSONBIN_KEY = state.cloudConfig.masterKey;
                     }
                     if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
-                    // Merge cloud data if it is newer
                     if(data.record.lastModified > state.lastModified) {
                         mergeData(data.record);
                         saveDataLocalOnly();
@@ -926,10 +913,9 @@
                     }
                 }
                 startAutoSync();
-                startAutoEmailScheduler(); // NEW
+                startAutoEmailScheduler(); 
             })
             .catch(() => {
-                // If fetch fails or times out, fall back to Local Mode
                 setLocalModeUI();
             });
         }
@@ -940,14 +926,12 @@
             document.getElementById('login-sync-text').innerText = "Local Mode (Offline)";
             document.getElementById('btn-login-cloud').style.display = 'block';
             
-            // Ensure we have employees to login with
             if(state.employees.length === 0) {
                 state.employees = DEFAULT_EMPLOYEES;
                 saveDataLocalOnly();
             }
         }
 
-        // --- SYNC ENGINE ---
         function startAutoSync() {
             if(syncInterval) clearInterval(syncInterval);
             if(!isJsonSync) return;
@@ -968,10 +952,8 @@
             }
         }
 
-        // --- NEW: AUTO EMAIL SCHEDULER ---
         function startAutoEmailScheduler() {
             if(autoEmailTimer) clearInterval(autoEmailTimer);
-            // Check every 60 seconds
             autoEmailTimer = setInterval(checkAutoEmailTrigger, 60000);
         }
 
@@ -982,17 +964,13 @@
             const date = now.getDate();
             const todayStr = now.toDateString();
 
-            // Daily Trigger: 12:05 PM (12:05)
-            // Logic: If time is 12:05 AND we haven't sent it today yet
             if (hours === 12 && minutes === 5 && state.autoEmailStatus.lastDailyDate !== todayStr) {
                 console.log("Triggering Daily Auto Email...");
                 generateAndMailDailyReport();
                 state.autoEmailStatus.lastDailyDate = todayStr;
-                saveData(); // Save status so we don't send it twice today
+                saveData(); 
             }
 
-            // Monthly Trigger: 1st of next month at 10:00 AM
-            // Logic: If date is 1 AND time is 10:00 AND we haven't sent it this month
             if (date === 1 && hours === 10 && minutes === 0) {
                 const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
                 if(state.autoEmailStatus.lastMonthlyDate !== monthStr) {
@@ -1006,35 +984,26 @@
 
         function generateAndMailDailyReport() {
             const dateStr = new Date().toISOString().split('T')[0];
-            
-            // 1. Generate CSV Data
             let csvContent = "Date,Name,ID,Status,Time\n";
             state.employees.forEach(emp => {
                 const att = state.attendance.find(a => a.eid === emp.id && a.date === dateStr);
                 let status = 'Absent';
-                if(att) {
-                    status = att.status;
-                }
+                if(att) { status = att.status; }
                 csvContent += `${dateStr},${emp.name},${emp.id},${status},${att ? att.time : '-'}\n`;
             });
-
-            // 2. Prepare Mailto
             const subject = encodeURIComponent(`Daily Attendance Report - ${dateStr}`);
-            const body = encodeURIComponent(`Please find the Daily Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
-            
-            // 3. Open
+            const body = encodeURIComponent(`Please find Daily Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
             window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
             alert("⏰ Auto-Email Triggered: Daily Report email draft opened.");
         }
 
         function generateAndMailMonthlyReport() {
             const now = new Date();
-            const monthVal = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`; // Previous month
+            const monthVal = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`; 
             const [year, month] = monthVal.split('-').map(Number);
             const daysInMonth = new Date(year, month, 0).getDate();
             const prefix = `${year}-${String(month).padStart(2,'0')}`;
             
-            // 1. Generate CSV Data
             let csvContent = "Month,Emp Name,Present,Leave,Absent,Total Days\n";
             state.employees.forEach(emp => {
                 let p = 0, l = 0, a = 0;
@@ -1051,16 +1020,13 @@
                 csvContent += `${monthVal},${emp.name},${p},${l},${a},${p+l+a}\n`;
             });
 
-            // 2. Prepare Mailto
             const subject = encodeURIComponent(`Monthly Attendance Report - ${monthVal}`);
-            const body = encodeURIComponent(`Please find the Monthly Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
+            const body = encodeURIComponent(`Please find Monthly Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
             
-            // 3. Open
             window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
             alert("⏰ Auto-Email Triggered: Monthly Report email draft opened.");
         }
 
-        // --- AUTOMATIC 5 MIN REMINDER ---
         function startAutoReminders() {
             if(autoReminderInterval) clearInterval(autoReminderInterval);
             autoReminderInterval = setInterval(() => {
@@ -1068,10 +1034,8 @@
                 const now = new Date();
                 const hour = now.getHours();
                 if(hour < 8 || hour > 13) return; 
-
                 const today = now.toISOString().split('T')[0];
                 if(!state.user || state.user.role !== 'emp') return;
-
                 const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
                 if(!checkedIn) {
                     sendLocalNotification("Attendance Reminder", "It's time to Check In! Please tap the Check-In button.");
@@ -1220,7 +1184,6 @@
             }
         }
 
-        // --- APP LOGIC ---
         function switchLogin(role) {
             document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
             document.getElementById(role==='emp'?'tab-emp':'tab-adm').classList.add('active');
@@ -1345,7 +1308,6 @@
             setTimeout(() => window.location.reload(), 1500);
         }
 
-        // --- NOTIFICATIONS & REMINDERS ---
         function requestNotificationPermission() {
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission();
@@ -1363,18 +1325,44 @@
             const message = prompt("Enter Important Message for UFO Tech Odisha Group:");
             if(!message) return;
 
-            const adminMobile = state.adminProfile.mobile || DEFAULT_ADMIN_MOBILE; // Use Admin's number
+            const adminMobile = state.adminProfile.mobile || DEFAULT_ADMIN_MOBILE; 
 
-            if(!confirm(`Prepare Group Message via Admin WhatsApp (${adminMobile})?\n\nNote: This will open a chat with the Admin number pre-filled with the message. Please copy it and send to your WhatsApp Group.`)) return;
+            // NEW LOGIC: Ask Admin to choose mode
+            const sendIndividual = confirm("Send Mode:\n\nClick [OK] to send INDIVIDUALLY to all employees.\nClick [CANCEL] to Copy message for Group Chat.");
 
-            const url = `https://wa.me/${adminMobile}?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-            toast("Opened WhatsApp with Admin. Copy and send to group.");
+            if(sendIndividual) {
+                // INDIVIDUAL BLAST MODE
+                const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+                if(employeesWithMobile.length === 0) return toast("No employees with mobile numbers found.");
+
+                if(!confirm(`Send Important Message to ${employeesWithMobile.length} employees individually? This will open multiple windows.`)) return;
+
+                let sentCount = 0;
+                const interval = setInterval(() => {
+                    if(sentCount >= employeesWithMobile.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const emp = employeesWithMobile[sentCount];
+                    const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`, '_blank');
+                    
+                    sentCount++;
+                }, 1000); 
+                toast("Sending messages to all employees...");
+
+            } else {
+                // GROUP CHAT MODE (Original Logic)
+                if(!confirm(`Prepare Group Message via Admin WhatsApp (${adminMobile})?\n\nNote: This will open a chat with Admin number pre-filled with the message. Please copy it and send to your WhatsApp Group.`)) return;
+
+                const url = `https://wa.me/${adminMobile}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                toast("Opened WhatsApp with Admin. Copy and send to group.");
+            }
         }
 
-        // --- UPDATED: SEND ATTENDANCE REMINDER (ADMIN) ---
         function sendBulkAttendanceReminder() {
-            // UPDATED DEFAULT MESSAGE
             const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM. Your check-in time and location will be recorded automatically.";
             
             const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
@@ -1385,7 +1373,6 @@
             if(!confirm(`Send Check-In Reminder to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
 
             let sentCount = 0;
-            // Loop with 1 second delay
             const interval = setInterval(() => {
                 if(sentCount >= employeesWithMobile.length) {
                     clearInterval(interval);
@@ -1402,7 +1389,6 @@
             }, 1000);
         }
 
-        // --- EMPLOYEE FEATURES ---
         function performCheckIn() {
             const btn = document.getElementById('btn-checkin');
             if(btn.classList.contains('checked-in') || btn.classList.contains('on-leave')) return;
@@ -1540,7 +1526,6 @@
             }
         }
 
-        // --- LEAVE APPROVALS LOGIC (ADMIN) ---
         function loadAdminApprovals() {
             const list = document.getElementById('pending-approvals-list');
             const requests = state.leaves.filter(l => l.status === 'Pending');
@@ -1644,25 +1629,21 @@
             }
         }
 
-        // --- REPORTS LOGIC (UPDATED FORMAT) ---
         function generateCompanyReport() {
-            const monthVal = document.getElementById('rep-comp-month').value; // YYYY-MM
-            const selectedComp = document.getElementById('rep-comp-select').value; // Get selected company
+            const monthVal = document.getElementById('rep-comp-month').value; 
+            const selectedComp = document.getElementById('rep-comp-select').value; 
             
             if(!monthVal) return;
             const tbody = document.getElementById('company-report-tbody');
             const [year, month] = monthVal.split('-').map(Number);
             
-            // Get days in month
             const daysInMonth = new Date(year, month, 0).getDate();
             const prefix = `${year}-${String(month).padStart(2,'0')}`;
             
-            // 1. Get Unique Companies
             const allCompanies = [...new Set(state.employees.map(e => e.company))].filter(c => c && c.trim() !== "");
             
-            // 2. Populate Dropdown if it's empty (first run)
             const selectEl = document.getElementById('rep-comp-select');
-            if(selectEl.options.length <= 1) { // Check if only default "All" exists
+            if(selectEl.options.length <= 1) { 
                 allCompanies.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c;
@@ -1671,7 +1652,6 @@
                 });
             }
 
-            // 3. Filter companies based on selection
             const companiesToShow = (selectedComp === 'ALL') ? allCompanies : allCompanies.filter(c => c === selectedComp);
             
             let rows = '';
@@ -1681,16 +1661,13 @@
             let totalLeave = 0;
 
             companiesToShow.forEach(comp => {
-                // 4. Get employees for this company
                 const compEmps = state.employees.filter(e => e.company === comp);
                 const empCount = compEmps.length;
                 
                 let p = 0, l = 0, a = 0;
                 
-                // 5. Calculate stats for this company's employees
                 for(let d=1; d<=daysInMonth; d++) {
                     const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
-                    // Check if ANY employee from this company is present on this day
                     const atts = state.attendance.filter(at => at.date === dayStr && compEmps.some(e => e.id === at.eid));
                     
                     atts.forEach(at => {
@@ -1699,10 +1676,8 @@
                     });
                 }
 
-                // Calculate Absent (Total days * Total Emps) - (Present + Leave)
                 a = (empCount * daysInMonth) - (p + l);
 
-                // Aggregate totals
                 totalEmpCount += empCount;
                 totalPresent += p;
                 totalAbsent += a;
@@ -1721,7 +1696,6 @@
                 </tr>`;
             });
 
-            // Handle "No Data" case
             if(companiesToShow.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>No companies found.</td></tr>";
             } else {
@@ -1809,12 +1783,11 @@
         }
 
         function generateMonthlyReport() {
-            const monthVal = document.getElementById('rep-month').value; // YYYY-MM
+            const monthVal = document.getElementById('rep-month').value; 
             if(!monthVal) return;
             const area = document.getElementById('monthly-report-area');
             const [year, month] = monthVal.split('-').map(Number);
             
-            // Get days in month
             const daysInMonth = new Date(year, month, 0).getDate();
             const prefix = `${year}-${String(month).padStart(2,'0')}`;
             
@@ -1824,7 +1797,6 @@
             let grandTotalLeave = 0;
 
             state.employees.forEach(emp => {
-                // Calculate stats for this employee
                 let p = 0, l = 0, a = 0;
                 
                 for(let d=1; d<=daysInMonth; d++) {
@@ -1911,7 +1883,6 @@
             downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
         }
 
-        // --- CHAT ENGINE ---
         function sendAdminMessage() {
             const target = document.getElementById('chat-target-adm').value;
             const msg = document.getElementById('chat-msg-adm').value;
@@ -1950,7 +1921,6 @@
             }).join('');
         }
 
-        // --- NEW: EMPLOYEE INTERACTION FUNCTIONS ---
         function loadEmpChatTargets() {
             const select = document.getElementById('emp-chat-target');
             if(!select) return;
@@ -1989,10 +1959,6 @@
 
         function loadEmpChat() {
             const list = document.getElementById('chat-list-emp');
-            // Filter messages relevant to current user:
-            // 1. Broadcasts (target = ALL)
-            // 2. Sent to me (target = myID)
-            // 3. Sent by me (sender = myID) - shows messages to Admin AND messages to colleagues
             const myMsgs = state.messages.filter(m => 
                 m.target === 'ALL' || 
                 m.target === state.user.id || 
@@ -2004,7 +1970,6 @@
             } else {
                 list.innerHTML = myMsgs.map(m => {
                     const isMine = m.sender === state.user.id;
-                    // Determine label for bubble
                     let label = isMine ? 'You' : m.senderName;
                     if(m.target === 'ALL') label = `${m.senderName} (All)`;
                     
@@ -2021,7 +1986,6 @@
         }
 
         function checkUnreadMessages() {
-            // Count messages NOT sent by me, AND (target is me OR target is ALL)
             const unreadCount = state.messages.filter(m => 
                 m.sender !== state.user.id && 
                 (m.target === 'ALL' || m.target === state.user.id)
@@ -2031,7 +1995,6 @@
             else { badge.classList.remove('show'); }
         }
 
-        // --- ADMIN FEATURES ---
         function loadDash() {
             document.getElementById('stat-emp').innerText = state.employees.length;
             const today = new Date().toISOString().split('T')[0];
@@ -2269,7 +2232,6 @@
             if(!msg) return toast("Enter message");
             
             if(target === 'ALL') {
-                // Updated to use delayed loop
                 let i = 0;
                 const interval = setInterval(() => {
                     if(i >= state.employees.length) {
@@ -2292,7 +2254,6 @@
             }
         }
 
-        // --- EMPLOYEE/ADMIN MODALS ---
         function showAddModal() {
             document.getElementById('m-id').value = '';
             document.getElementById('m-name').value = '';
@@ -2337,11 +2298,9 @@
 
             const existing = state.employees.findIndex(e => e.id === id);
             if(existing > -1) {
-                // Update
                 state.employees[existing] = { id, name, company: comp, mail, mobile, pass, photo };
                 toast("Employee Updated");
             } else {
-                // Add
                 state.employees.push({ id, name, company: comp, mail, mobile, pass, photo });
                 toast("Employee Added");
             }
@@ -2381,7 +2340,6 @@
                 const text = e.target.result;
                 const rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
                 let count = 0;
-                // Skip header (row 0)
                 for(let i=1; i<rows.length; i++) {
                     const row = rows[i];
                     if(row.length >= 2 && row[0] !== "") {
@@ -2402,7 +2360,6 @@
             reader.readAsText(file);
         }
 
-        // --- NOTIFICATIONS (EMPLOYEE) ---
         function loadNotifications() {
             const list = document.getElementById('notifications-list');
             const myNotifs = state.notifications.filter(n => !n.target || n.target === state.user.id).reverse();
@@ -2420,7 +2377,6 @@
 
         function checkUnreadNotifications() {
             const count = state.notifications.filter(n => (!n.target || n.target === state.user.id) && !n.read).length;
-            // Ideally show badge, but we just use logic here
         }
 
         function markAllRead() {
@@ -2430,10 +2386,15 @@
             saveData(); loadNotifications();
         }
 
-        // --- MEETINGS (ADMIN) ---
+        // --- UPDATED MEETINGS FUNCTIONS ---
         function loadMeetingTargetOptions() {
             const sel = document.getElementById('meet-target');
-            sel.innerHTML = "<option value=''>Select Employee...</option>" + state.employees.map(e => `<option value='${e.id}'>${e.name}</option>`).join('');
+            // Reset to just first option to avoid duplicates
+            sel.innerHTML = `<option value="ALL">ALL EMPLOYEES (Broadcast)</option>`;
+            
+            state.employees.forEach(e => {
+                sel.innerHTML += `<option value='${e.id}'>${e.name} (Individual)</option>`;
+            });
         }
 
         function scheduleMeeting() {
@@ -2445,21 +2406,61 @@
 
             if(!title || !target || !date || !time) return toast("Fill all fields");
 
-            const emp = state.employees.find(e => e.id === target);
-            if(!emp) return toast("Employee not found");
-
             const msg = `Meeting: ${title}\nDate: ${date}\nTime: ${time}\nType: ${type}\n\nLink: [Zoom/Meet Link]`;
-            
-            // Add to history
-            state.meetings.push({ id: Date.now(), title, target, targetName: emp.name, date, time, type });
-            
-            // Send WhatsApp
-            if(emp.mobile) {
-                window.open(`https://wa.me/${emp.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                toast("Invitation Sent via WhatsApp");
+
+            if(target === 'ALL') {
+                // 1. CHECK FOR MOBILE NUMBERS
+                const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+                if(employeesWithMobile.length === 0) return toast("No employees with mobile numbers found.");
+
+                // 2. CONFIRM
+                if(!confirm(`Broadcast meeting invitation to ${employeesWithMobile.length} employees individually?`)) return;
+
+                // 3. SAVE TO HISTORY
+                state.meetings.push({ 
+                    id: Date.now(), 
+                    title: title + " (Broadcast)", 
+                    target: 'ALL', 
+                    targetName: 'All Employees', 
+                    date, 
+                    time, 
+                    type 
+                });
+
+                // 4. LOOP AND SEND
+                let sentCount = 0;
+                const interval = setInterval(() => {
+                    if(sentCount >= employeesWithMobile.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const emp = employeesWithMobile[sentCount];
+                    const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(msg)}`, '_blank');
+                    
+                    sentCount++;
+                }, 1000); // 1 second delay between each window
+
+                toast("Sending to All Employees...");
+
             } else {
-                toast("No mobile number for employee");
+                // EXISTING INDIVIDUAL LOGIC
+                const emp = state.employees.find(e => e.id === target);
+                if(!emp) return toast("Employee not found");
+
+                // Add to history
+                state.meetings.push({ id: Date.now(), title, target, targetName: emp.name, date, time, type });
+                
+                // Send WhatsApp
+                if(emp.mobile) {
+                    window.open(`https://wa.me/${emp.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                    toast("Invitation Sent via WhatsApp");
+                } else {
+                    toast("No mobile number for employee");
+                }
             }
+            
             saveData();
             loadMeetingsList();
         }
@@ -2479,7 +2480,6 @@
             }
         }
 
-        // --- SETTINGS / UTILS ---
         function checkPin() {
             const pass = prompt("Enter Admin Password to access Settings:");
             if(pass === state.adminProfile.pass) {
