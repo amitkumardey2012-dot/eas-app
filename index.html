@@ -19,7 +19,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'eas-pwa-v21';
+                const CACHE_NAME = 'eas-pwa-v22';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
                 self.addEventListener('fetch', e => {
@@ -236,8 +236,14 @@
             </div>
             
             <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:5px; font-size:1.6rem; font-weight:800;">EAS</h1>
-            <p style="margin:0 0 25px 0; color:#666; font-weight:500;">Tech Odisha | Attendance System</p>
-            
+            <p style="margin:0 0 15px 0; color:#666; font-weight:500;">Tech Odisha | Attendance System</p>
+
+            <!-- UPDATED CLOUD STATUS INDICATOR (Moved to top for visibility) -->
+            <div style="margin-bottom:20px; display:flex; justify-content:center; align-items:center; gap:8px; padding: 6px 12px; background: rgba(255,255,255,0.5); border-radius: 20px; border:1px solid rgba(255,255,255,0.6);">
+                <div class="dot" id="login-sync-dot"></div> 
+                <span id="login-sync-text" style="font-size:0.75rem; font-weight:600; color:#555;">Checking Cloud...</span>
+            </div>
+
             <div class="login-tabs">
                 <div id="tab-emp" class="tab active" onclick="switchLogin('emp')">Employee</div>
                 <div id="tab-adm" class="tab" onclick="switchLogin('adm')">Admin</div>
@@ -254,12 +260,7 @@
             </button>
 
             <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:15px;"></p>
-            <div class="app-version-tag">v2.1.0 (Categorized Reports)</div>
-            
-            <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
-                 <div class="dot" id="login-sync-dot"></div> 
-                 <span id="login-sync-text" style="font-size:0.75rem; color:#666;">Checking Cloud...</span>
-            </div>
+            <div class="app-version-tag">v2.2.0 (Live Cloud Sync)</div>
         </div>
     </div>
 
@@ -684,9 +685,11 @@
 
     <script>
         // --- CONFIG & STATE ---
-        const DEFAULT_BIN_ID = "";
-        const DEFAULT_API_KEY = "";
-        const APP_VERSION = "2.1.0";
+        // UPDATED CLOUD CREDENTIALS
+        const DEFAULT_BIN_ID = "-69839789d0ea881f40a1013c";
+        const DEFAULT_API_KEY = "$2a$10$5/9dwZpH7KJkoLQz.L/IeOMjQdpE4T2tGm0ymtX74QmEtbj6RAwzi";
+        
+        const APP_VERSION = "2.2.0";
         const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
         // DEFAULT GROUP LINK
         const DEFAULT_GROUP_LINK = "https://chat.whatsapp.com/C5jOhW0pwVP7yqcBW8n15g"; 
