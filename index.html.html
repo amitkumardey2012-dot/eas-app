@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#4e54c8">
+    <title>EAS (Tech Odisha)</title>
+    
+    <!-- PWA / MOBILE APP CAPABILITIES -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EAS">
+    <meta name="description" content="Professional Attendance & Leave Management System">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (POPINS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SERVICE WORKER SCRIPT FOR PWA CAPABILITY (Embedded) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'eas-pwa-cache-v16';
+                self.addEventListener('install', event => {
+                    self.skipWaiting(); 
+                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
+                });
+                self.addEventListener('activate', event => {
+                    event.waitUntil(caches.keys().then(cacheNames => Promise.all(cacheNames.map(name => { if (name !== CACHE_NAME) return caches.delete(name); }))));
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+                });
+            `;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(e => console.log('SW registration failed:', e));
+        }
+    </script>
+    
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            /* COLOR PALETTE (Fresh Indigo/Ocean Theme) */
+            --primary: #4e54c8;
+            --primary-grad: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); 
+            --secondary: #11998e;
+            --secondary-grad: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --whatsapp: #25D366;
+            --whatsapp-grad: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            --danger: #ff416c;
+            --danger-grad: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            --warning: #f7971e;
+            
+            /* FONT */
+            --font-family: 'Poppins', sans-serif;
+            
+            --text-main: #2d3436;
+            --text-light: #636e72;
+            --glass: rgba(255, 255, 255, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+            --radius: 24px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+
+        body { 
+            margin: 0; font-family: var(--font-family); 
+            /* BACKGROUND ANIMATION */
+            background: linear-gradient(-45deg, #4e54c8, #8f94fb, #a18cd1, #fbc2eb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main); 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; -webkit-overflow-scrolling: touch;
+        }
+
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(56, 239, 125, 0); } 100% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { background: white; height: auto; display: block; overflow: visible; animation: none; }
+            #login-view, nav, header, .btn, .check-in-btn-area, .modal, #toast, .chat-container, .chat-input-area, .form-group button { display: none !important; }
+            main { display: block !important; padding: 0; overflow: visible; }
+            .card { box-shadow: none; border:1px solid #ccc; break-inside: avoid; color: black; background: white; margin-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; }
+            th, td { border:1px solid #000; padding: 4px; text-align: left; color: black; }
+            .badge { color: white !important; border:1px solid #000; }
+        }
+
+        /* --- LAYOUT --- */
+        #app-container { display: none; height: 100%; flex-direction: column; width: 100%; position: relative; }
+        
+        header {
+            background: var(--glass); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom:1px solid var(--glass-border); z-index: 100; backdrop-filter: blur(20px); position: sticky; top: 0; touch-action: manipulation;
+        }
+        header h1 { margin: 0; font-size: 1.2rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; letter-spacing: -0.5px; flex: 1; }
+        
+        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; display: none; animation: fadeIn 0.4s ease; scroll-behavior: smooth; scrollbar-width: none; }
+        main.active { display: block; }
+
+        .card { background: var(--glass); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--glass-border); position: relative; overflow: hidden; backdrop-filter: blur(20px); }
+        .card h2, .card h3 { margin-top: 0; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+        
+        /* --- COMPONENTS --- */
+        .btn { width: auto; padding: 14px 24px; border: none; border-radius: 50px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-bottom: 5px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary-grad); }
+        .btn-success { background: var(--secondary-grad); }
+        .btn-danger { background: var(--danger-grad); }
+        .btn-whatsapp { background: var(--whatsapp-grad); }
+        .btn-outline { background: rgba(255,255,255,0.8); border: 2px solid rgba(255,255,255,0.8); color: var(--primary); }
+        .btn-block { width: 100%; }
+        .btn-sm { padding: 10px 16px; font-size: 0.8rem; margin-right: 5px; border-radius: 20px; }
+
+        #btn-force-sync { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--primary); padding: 5px; transition: 0.3s; }
+        #btn-force-sync.syncing { animation: spin 1s linear infinite; color: #f7971e; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-light); font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 14px; border: 2px solid rgba(255,255,255,0.5); border-radius: 15px; font-family: inherit; font-size: 1rem; transition: 0.3s; background: rgba(255,255,255,0.7); -webkit-appearance: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(255,255,255,1); box-shadow: 0 0 0 0 4px rgba(78, 84, 200, 0.1); }
+
+        .login-tabs { display: flex; background: rgba(255,255,255,0.8); padding: 5px; border-radius: 30px; margin-bottom: 25px; backdrop-filter: blur(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .tab { flex: 1; text-align: center; padding: 12px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #888; transition: 0.3s; }
+        .tab.active { background: var(--primary-grad); color: white; font-weight: 700; box-shadow: 0 4px 10px rgba(78, 84, 200, 0.2); }
+
+        .check-in-btn-area { text-align: center; margin: 30px 0; position: relative; }
+        .big-btn { width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,0.6); border: 8px solid var(--secondary-grad); color: var(--secondary); font-size: 1.5rem; font-weight: 700; cursor: pointer; box-shadow: 0 20px 40px rgba(56, 239, 125, 0.3); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto; position: relative; z-index: 10; backdrop-filter: blur(5px); }
+        .big-btn small { font-size: 0.9rem; margin-top: 8px; opacity: 0.7; font-weight: 500; display: block; }
+        .big-btn.checked-in { background: var(--secondary-grad); border-color: transparent; color: white; animation: pulse 2s infinite; cursor: default; }
+        .big-btn.on-leave { background: var(--warning); border-color: transparent; color: white; cursor: not-allowed; opacity: 0.9; }
+
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.4); }
+        .list-item:last-child { border-bottom: none; }
+        .user-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.05); flex-shrink: 0; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .user-details h4 { margin: 0; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .user-details p { margin: 2px 0 0 0 0; font-size: 0.8rem; color: #888; }
+
+        /* --- ROUND ICONS --- */
+        .icon-circle {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+            margin-bottom: 4px;
+            box-shadow: inset 0 0 5px rgba(255,255,255,0.5);
+        }
+        .nav-item.active .icon-circle {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            color: #fff;
+        }
+
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 420px; background: rgba(255, 255, 255, 0.85); padding: 12px 10px; border-radius: 35px; display: flex; justify-content: space-around; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding-bottom: calc(12px + var(--safe-bottom)); }
+        .nav-item { text-align: center; color: #888; font-size: 0.7rem; cursor: pointer; flex: 1; transition: 0.3s; padding: 6px 0; border-radius: 20px; position: relative; }
+        .nav-item.active { color: var(--primary); font-weight: 700; transform: translateY(-2px); }
+        
+        .nav-badge { position: absolute; top: 0px; right: 20px; background: var(--danger); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; display: none; z-index: 2; border: 2px solid rgba(255,255,255,0.8); }
+        .nav-badge.show { display: flex; }
+
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .bg-present { background: var(--secondary-grad); }
+        .bg-warning { background: var(--warning); }
+        .bg-danger { background: var(--danger-grad); }
+
+        /* --- CHAT ENGINE STYLES --- */
+        .chat-container { display: flex; flex-direction: column; gap: 15px; min-height: calc(100vh - 380px); overflow-y: auto; padding: 10px; padding-bottom: 80px; }
+        .msg-bubble { max-width: 80%; padding: 12px 18px; border-radius: 20px; font-size: 0.9rem; line-height: 1.5; position: relative; animation: fadeIn 0.3s ease; word-wrap: break-word; }
+        .msg-bubble.sent { align-self: flex-end; background: var(--primary-grad); color: white; border-bottom-right-radius: 4px; }
+        .msg-bubble.received { align-self: flex-start; background: rgba(255,255,255,0.9); color: #333; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .msg-meta { display: block; font-size: 0.65rem; margin-top: 5px; opacity: 0.7; text-align: right; }
+
+        .chat-input-area { position: fixed; bottom: 95px; left: 15px; right: 15px; background: rgba(255,255,255,0.95); padding: 12px; border-radius: 30px; display: flex; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); backdrop-filter: blur(10px); z-index: 90; align-items: center; }
+        #emp-chat-target {
+            width: auto; max-width: 120px; 
+            border: none; background: transparent; 
+            padding: 0; margin: 0;
+            font-size: 0.9rem; font-weight: 700; color: var(--primary);
+            cursor: pointer;
+        }
+        #emp-chat-target option { color: #333; background: white; }
+        .chat-input-area input { flex: 1; border: none; background: transparent; padding: 0 10px; font-size: 0.95rem; }
+        .chat-input-area button { width: 42px; height: 42px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        #toast { visibility: hidden; min-width: 280px; background: rgba(45, 52, 54, 0.95); color: #fff; text-align: center; border-radius: 50px; padding: 14px 26px; position: fixed; z-index: 3000; left: 50%; bottom: 110px; transform: translateX(-50%) translateY(20px); font-size: 14px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); opacity: 0; transition: 0.3s; font-weight: 500; }
+        #toast.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal.open { display: flex; opacity: 1; }
+        .modal-content { background: rgba(255, 255, 255, 0.98); width: 92%; max-width: 400px; padding: 25px; border-radius: 30px; animation: slideIn 0.3s; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .close-btn { float: right; cursor: pointer; font-size: 1.5rem; line-height: 20px; color: #aaa; transition: 0.2s;}
+        .close-btn:hover { color: var(--danger); transform: rotate(90deg); }
+
+        .live-sync-indicator { display: none; font-size: 0.75rem; color: #666; align-items: center; gap: 5px; font-weight: 600; margin-left: 10px; background: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 15px; backdrop-filter: blur(5px); }
+        .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; transition: 0.3s; }
+        .dot.large { width: 12px; height: 12px; } 
+        .dot.syncing { background: #f7971e; animation: pulse 1s infinite; }
+        .dot.online { background: #38ef7d; box-shadow: 0 0 10px #38ef7d; }
+        .dot.offline { background: #ff416c; box-shadow: 0 0 10px #ff416c; }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(200,200,200,0.6); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background: var(--secondary-grad); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .stat-card { background: rgba(255,255,255,0.4); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.6); cursor: pointer; transition: 0.2s; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); backdrop-filter: blur(10px); }
+        .dashboard-sync-status { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; font-weight: 600; padding: 15px; background: rgba(255,255,255,0.4); border-radius: 15px; margin-top: 10px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: rgba(255,255,255,0.4); border-radius: 15px; overflow: hidden; }
+        .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom:1px solid rgba(255,255,255,0.4); }
+        .data-table th { background: rgba(78, 84, 200, 0.1); color: var(--primary); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .notif-item { background: rgba(255,255,255,0.6); padding: 12px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .notif-item.unread { background: rgba(78, 84, 200, 0.1); border-left-color: var(--warning); }
+        .notif-meta { font-size: 0.7rem; color: #888; margin-top: 5px; }
+
+        .online-user-row { display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,255,0.4); border-radius:12px; margin-bottom:5px;}
+        
+        .app-version-tag {
+            font-size: 0.75rem;
+            color: rgba(78, 84, 200, 0.7);
+            background: rgba(255,255,255,0.5);
+            padding: 5px 12px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* REPORTS STYLES */
+        .report-summary-box {
+            display: flex; justify-content: space-around; margin-bottom: 20px;
+        }
+        .rep-stat {
+            text-align: center;
+            background: rgba(255,255,255,0.5);
+            padding: 12px;
+            border-radius: 15px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        .rep-stat h4 { margin:0; font-size:1.3rem; color:var(--secondary); }
+        .rep-stat small { font-size:0.75rem; color:#666; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Message</div>
+
+    <!-- LOGIN VIEW -->
+    <div id="login-view" style="height:100vh; display:flex; align-items:center; justify-content:center;">
+        <div class="card" style="width:90%; max-width:360px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.15);">
+            <div style="margin-bottom:15px; display:flex; justify-content:center;">
+                 <div class="icon-circle" style="background:var(--primary-grad); color:white; width:60px; height:60px; font-size:1.8rem;">
+                    <i class="fas fa-fingerprint"></i>
+                 </div>
+            </div>
+            
+            <h1 style="background:var(--primary-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent; margin-bottom:25px; font-size:1.7rem; font-weight:700;">EAS (Tech Odisha)</h1>
+            <p style="margin-top:-20px; margin-bottom:20px; color:#666; font-weight:500;">Employee Attendance</p>
+            
+            <div class="login-tabs">
+                <div id="tab-emp" class="tab active" onclick="switchLogin('emp')">Employee</div>
+                <div id="tab-adm" class="tab" onclick="switchLogin('adm')">Admin</div>
+            </div>
+            
+            <div class="form-group"><input type="text" id="login-id" placeholder="Enter ID" style="text-align:center;"></div>
+            <div class="form-group"><input type="password" id="login-pass" placeholder="Password" style="text-align:center;"></div>
+            <button class="btn btn-primary btn-block" onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            
+            <button id="btn-login-cloud" class="btn btn-outline btn-sm" onclick="openCloudConfig()" style="width:100%; margin-top:15px;">
+                <i class="fas fa-cloud"></i> Cloud Config
+            </button>
+
+            <p id="login-hint" style="font-size:0.75rem; color:#666; margin-top:10px;"></p>
+            
+            <div class="app-version-tag">Version <span id="app-version-login">2.0.3</span></div>
+            
+            <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
+                 <div class="dot" id="login-sync-dot"></div> 
+                 <span id="login-sync-text" style="font-size:0.75rem; color:#666;">Checking Cloud...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <header>
+            <h1 id="page-title">Dashboard</h1>
+            <div class="live-sync-indicator" id="header-sync-area" style="display:none;">
+                <div class="dot" id="sync-dot"></div> <span id="sync-text">Syncing...</span>
+            </div>
+            <div class="icon-circle" onclick="manualSync()" id="btn-force-sync" style="width:35px; height:35px; background:rgba(255,255,255,0.3); cursor:pointer;">
+                 <i class="fas fa-sync"></i>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img id="header-avatar" src="" class="avatar" style="width:38px; height:38px;">
+                <div id="settings-btn" style="width:35px; height:35px; display:none; cursor:pointer; border-radius:50%; background:rgba(255,255,255,0.3); align-items:center; justify-content:center;" onclick="checkPin()">
+                    <i class="fas fa-cog" style="color:var(--text-main);"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- === EMPLOYEE VIEWS === -->
+        <main id="view-home">
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border:none;">
+                <h3>Hello, <span id="u-name">User</span> 👋</h3>
+                <p style="opacity:0.9; font-size: 0.9rem;" id="today-date">Date</p>
+                <div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;">
+                    <small>Emp ID: <span id="u-id" style="font-weight:700">-</span></small>
+                    <br>
+                    <small>Company: <span id="u-comp" style="font-weight:700">-</span></small>
+                </div>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <h2>Daily Attendance</h2>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:20px;">
+                    <label class="switch">
+                        <input type="checkbox" id="loc-toggle" checked onchange="handleLocationToggle(this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span style="font-size:0.9rem;">GPS</span>
+                </div>
+                <div class="check-in-btn-area">
+                    <button id="btn-checkin" class="big-btn" onclick="performCheckIn()">Check In <small>Tap to Start</small></button>
+                </div>
+                <p id="loc-msg" style="color:#666; font-size:0.8rem;">📍 Location Active</p>
+            </div>
+
+            <div class="card">
+                <h2>My Leave Status</h2>
+                <div id="emp-leave-status-list"></div>
+            </div>
+
+            <div class="card">
+                <h2>Leave Request</h2>
+                <div class="form-group"><input type="date" id="l-from"></div>
+                <div class="form-group"><input type="date" id="l-to"></div>
+                <div class="form-group"><textarea id="l-reason" rows="2" placeholder="Reason"></textarea></div>
+                <button class="btn btn-primary btn-block" onclick="applyLeave()">Apply Leave</button>
+            </div>
+        </main>
+
+        <main id="view-visits-emp">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Service / Visit Log</h2>
+            <div class="card">
+                <div class="form-group"><label>Date</label><input type="date" id="v-date"></div>
+                <div class="form-group"><label>Type</label><select id="v-type"><option value="Service Call">Service Call</option><option value="Site Visit">Site Visit</option><option value="Installation">Installation</option></select></div>
+                <div class="form-group"><label>Ticket / Complaint No.</label><input type="text" id="v-ticket" placeholder="e.g. CMP-1024"></div>
+                <div class="form-group"><label>Remarks</label><textarea id="v-remarks" rows="3" placeholder="Details..."></textarea></div>
+                <button class="btn btn-primary btn-block" onclick="saveVisit()">Save Log</button>
+            </div>
+            <h3 style="font-size:1rem; margin-bottom:10px;">My Recent Logs</h3>
+            <div id="emp-visits-list"></div>
+        </main>
+
+        <main id="view-history">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">My Attendance History</h2>
+            <div class="card">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="month" id="hist-month" onchange="loadHistory()">
+                    <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
+                <!-- UPDATED TABLE STYLE -->
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Status</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
+            </div>
+        </main>
+
+        <main id="view-notifications">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">System Alerts</h2>
+            <div id="notifications-list"></div>
+            <button class="btn btn-outline btn-block" onclick="markAllRead()" style="margin-top:20px;">Mark All Read</button>
+        </main>
+
+        <!-- === CHAT / MSG ENGINE (EMPLOYEE) === -->
+        <main id="view-chat-emp">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Messages</h2>
+            <div id="chat-list-emp" class="chat-container"></div>
+            <!-- INPUT AREA WITH TARGET SELECTOR -->
+            <div class="chat-input-area">
+                <div style="display:flex; align-items:center; gap:8px; border-right:1px solid rgba(0,0,0,0.1); padding-right:12px;">
+                    <i class="fas fa-caret-down" style="color:#888; font-size:0.8rem;"></i>
+                    <select id="emp-chat-target">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <input type="text" id="emp-chat-input" placeholder="Type message..." onkeypress="handleEnterEmpChat(event)">
+                <div class="icon-circle" onclick="sendEmpMessage()" style="width:36px; height:36px; background:var(--primary); color:white; cursor:pointer;">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+            </div>
+        </main>
+
+        <!-- === ADMIN VIEWS === -->
+        <main id="view-dashboard">
+            <div class="card">
+                <h3>Cloud Sync Status</h3>
+                <div class="dashboard-sync-status">
+                    <div class="dot large" id="dash-sync-dot"></div> <span id="dash-sync-text">Connecting...</span>
+                </div>
+                <p style="font-size:0.75rem; text-align:center; color:#666; margin-top:5px;">Syncs with all devices automatically.</p>
+            </div>
+
+            <div class="card">
+                <h3>Online Employees <small style="font-size:0.7rem; font-weight:400; color:#666;">(Active now)</small></h3>
+                <div id="online-users-list" style="max-height:150px; overflow-y:auto;"></div>
+            </div>
+
+            <div class="card">
+                <h2>Overview</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; text-align:center;">
+                    <div class="stat-card" onclick="navTo('view-team')">
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--primary);" id="stat-emp">0</div>
+                        <small>Employees</small>
+                    </div>
+                    <div class="stat-card" onclick="navTo('view-reports')">
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--secondary);" id="stat-pres">0</div>
+                        <small>Present Today</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS CARD -->
+            <div class="card" style="border: 2px solid rgba(37, 211, 102, 0.3);">
+                <h3><i class="fab fa-whatsapp" style="color:var(--whatsapp); margin-right:8px;"></i> Quick Actions</h3>
+                <p style="font-size:0.8rem; color:#666; margin-bottom:10px;">Send broadcast reminders via WhatsApp.</p>
+                <button class="btn btn-whatsapp btn-block" onclick="sendBulkAttendanceReminder()">
+                    <i class="fas fa-bell"></i> Send Check-In Reminder
+                </button>
+                <!-- IMPORTANT GROUP MSG BUTTON -->
+                <button class="btn btn-danger btn-block" style="margin-top:10px; background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);" onclick="sendImportantGroupMsg()">
+                    <i class="fas fa-bullhorn"></i> Important Group Msg (Admin)
+                </button>
+            </div>
+        </main>
+
+        <main id="view-checkins-adm">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <h2 style="font-size:1.2rem;">All Check-Ins</h2>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-danger btn-sm" onclick="deleteSelectedCheckins()"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="btn btn-success btn-sm" onclick="proxyCheckInAll()"><i class="fas fa-check-double"></i> Check All</button>
+                </div>
+            </div>
+            <div class="card">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="date" id="ci-filter-date" onchange="loadAdminCheckins()">
+                    <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th><input type="checkbox" onchange="toggleAllChecks(this)"></th><th>Emp</th><th>Time</th><th>Loc</th><th>Status</th></tr></thead><tbody id="checkins-tbody"></tbody></table></div>
+            </div>
+        </main>
+
+        <main id="view-team">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <h2 style="font-size:1.2rem;">Manage Team</h2>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-success btn-sm" onclick="downloadAllEmployees()"><i class="fas fa-file-csv"></i> All Data</button>
+                    <button class="btn btn-warning btn-sm" onclick="showImportModal()"><i class="fas fa-file-upload"></i> Import</button>
+                </div>
+            </div>
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <button class="btn btn-primary btn-sm" onclick="showAddModal()"><i class="fas fa-plus"></i> Add Employee</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAllEmployees()" style="border: 2px solid white;"><i class="fas fa-trash-alt"></i> Delete All</button>
+            </div>
+            <div id="team-list"></div>
+        </main>
+
+        <main id="view-visits-adm">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="font-size:1.2rem;">Service Reports</h2>
+                <button class="btn btn-success btn-sm" onclick="downloadVisitsCSV()"><i class="fas fa-file-excel"></i> Excel</button>
+            </div>
+            <div class="card">
+                 <div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Date</th><th>Emp</th><th>Type</th><th>Ticket</th><th>Remarks</th><th>Action</th></tr></thead><tbody id="admin-visits-tbody"></tbody></table></div>
+            </div>
+        </main>
+
+        <!-- === APPROVALS VIEW (ADMIN) === -->
+        <main id="view-approvals">
+             <h2 style="font-size:1.2rem; margin-bottom:15px;">Leave Management</h2>
+             <div style="display:flex; gap:10px; margin-bottom:15px;">
+                 <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('current')">This Month</button>
+                 <button class="btn btn-outline btn-sm" onclick="loadLeaveReports('previous')">Last Month</button>
+                 <button class="btn btn-primary btn-sm" onclick="loadAdminApprovals()">Pending</button>
+             </div>
+             <div id="pending-approvals-list"></div>
+        </main>
+
+        <!-- === REPORTS VIEW (ADMIN) === -->
+        <main id="view-reports">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Reports</h2>
+            
+            <!-- COMPANY WISE REPORT -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(78,84,200,0.05) 0%, rgba(143,148,251,0.05) 100%);">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Company Wise Report</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadCompanyReportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                </div>
+                
+                <!-- NEW: COMPANY DROPDOWN -->
+                <div class="form-group">
+                    <label>Filter Company</label>
+                    <select id="rep-comp-select" onchange="generateCompanyReport()">
+                        <option value="ALL">All Companies</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Month</label>
+                    <input type="month" id="rep-comp-month" onchange="generateCompanyReport()">
+                </div>
+                
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Total Emp</th>
+                                <th style="color:var(--secondary)">Present</th>
+                                <th style="color:var(--danger)">Absent</th>
+                                <th style="color:var(--warning)">Leave</th>
+                                <th>Att %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="company-report-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Daily Report -->
+            <div class="card">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Daily Attendance Report</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadDailyReportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                </div>
+                <div class="form-group">
+                    <label>Select Date</label>
+                    <input type="date" id="rep-date" onchange="generateDailyReport()">
+                </div>
+                <div id="daily-report-area">
+                    <p style="text-align:center; color:#666;">Select a date to view report.</p>
+                </div>
+            </div>
+
+            <!-- Monthly Report -->
+            <div class="card">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Monthly Summary</h3>
+                    <button class="btn btn-success btn-sm" onclick="downloadMonthlyReportCSV()"><i class="fas fa-file-excel"></i> CSV</button>
+                </div>
+                <div class="form-group">
+                    <label>Select Month</label>
+                    <input type="month" id="rep-month" onchange="generateMonthlyReport()">
+                </div>
+                <div id="monthly-report-area">
+                     <p style="text-align:center; color:#666;">Select a month to view summary.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- === CHAT / MSG ENGINE (ADMIN) === -->
+        <main id="view-chat-adm">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Admin Message Engine</h2>
+            
+            <div class="card">
+                <div class="form-group"><label>Target Employee</label>
+                    <select id="chat-target-adm">
+                        <option value="ALL">ALL EMPLOYEES</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Message</label><textarea id="chat-msg-adm" rows="3" placeholder="Type your message here..."></textarea></div>
+                <button class="btn btn-primary btn-block" onclick="sendAdminMessage()">
+                    <i class="fas fa-paper-plane"></i> Broadcast Message
+                </button>
+            </div>
+
+            <h3 style="font-size:1rem; margin-bottom:10px;">Message History</h3>
+            <div id="admin-msg-history" class="chat-container"></div>
+        </main>
+
+        <!-- === NEW: MEETINGS VIEW (ADMIN) === -->
+        <main id="view-meetings">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Meeting Schedule (WhatsApp)</h2>
+            
+            <div class="card">
+                <h3>Schedule Call</h3>
+                <div class="form-group"><label>Meeting Title</label><input type="text" id="meet-title" placeholder="e.g. Weekly Sync"></div>
+                <div class="form-group">
+                    <label>Target Employee</label>
+                    <select id="meet-target">
+                        <!-- UPDATED: Added ALL Option -->
+                        <option value="ALL">ALL EMPLOYEES (Broadcast)</option>
+                        <!-- JS will append individual employees here -->
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group"><label>Date</label><input type="date" id="meet-date"></div>
+                    <div class="form-group"><label>Time</label><input type="time" id="meet-time"></div>
+                </div>
+                <div class="form-group"><label>Type</label>
+                    <select id="meet-type">
+                        <option value="Voice">Voice Call</option>
+                        <option value="Video">Video Call</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="scheduleMeeting()"><i class="fas fa-calendar-plus"></i> Schedule Meeting</button>
+            </div>
+
+            <h3 style="font-size:1rem; margin-bottom:10px;">Scheduled Meetings</h3>
+            <div id="meetings-list"></div>
+        </main>
+
+        <main id="view-reminders">
+            <h2 style="font-size:1.2rem; margin-bottom:15px;">Send Custom Reminders</h2>
+            <div class="card">
+                <div class="form-group"><label>Target Employee</label><select id="rem-target"><option value="ALL">ALL Employees</option></select></div>
+                <div class="form-group"><label>Message</label><textarea id="rem-msg" rows="3" placeholder="e.g. Check in by 10 AM."></textarea></div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn btn-warning btn-block" onclick="sendReminder()"><i class="fas fa-bell"></i> App Alert</button>
+                    <button class="btn btn-whatsapp btn-block" onclick="sendWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- NAV BARS -->
+        <nav class="bottom-nav" id="nav-emp">
+            <div class="nav-item active" onclick="navTo('view-home', this)">
+                <div class="icon-circle"><i class="fas fa-home"></i></div>
+                Home
+            </div>
+            <div class="nav-item" onclick="navTo('view-visits-emp', this)">
+                <div class="icon-circle"><i class="fas fa-tools"></i></div>
+                Visits
+            </div>
+            <div class="nav-item" onclick="navTo('view-history', this)">
+                <div class="icon-circle"><i class="fas fa-history"></i></div>
+                History
+            </div>
+            <div class="nav-item" onclick="navTo('view-chat-emp', this)">
+                <div class="icon-circle"><i class="fas fa-comments"></i><span id="emp-chat-badge" class="nav-badge">!</span></div>
+                Msg
+            </div>
+            <div class="nav-item" onclick="logout()">
+                <div class="icon-circle" style="background:rgba(255,65,108,0.1); color:var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
+                Exit
+            </div>
+        </nav>
+
+        <nav class="bottom-nav" id="nav-adm" style="display:none;">
+            <div class="nav-item active" onclick="navTo('view-dashboard', this)">
+                <div class="icon-circle"><i class="fas fa-chart-pie"></i></div>
+                Dash
+            </div>
+            <div class="nav-item" onclick="navTo('view-checkins-adm', this)">
+                <div class="icon-circle"><i class="fas fa-clock"></i></div>
+                In
+            </div>
+            <div class="nav-item" onclick="navTo('view-team', this)">
+                <div class="icon-circle"><i class="fas fa-users"></i></div>
+                Team
+            </div>
+            <div class="nav-item" onclick="navTo('view-approvals', this)">
+                <div class="icon-circle"><i class="fas fa-user-clock"></i></div>
+                Leaves
+            </div>
+            <div class="nav-item" onclick="navTo('view-visits-adm', this)">
+                <div class="icon-circle"><i class="fas fa-file-invoice"></i></div>
+                Visits
+            </div>
+            <!-- NEW: REPORTS BUTTON -->
+            <div class="nav-item" onclick="navTo('view-reports', this)">
+                <div class="icon-circle"><i class="fas fa-chart-bar"></i></div>
+                Rpts
+            </div>
+            <div class="nav-item" onclick="navTo('view-chat-adm', this)">
+                <div class="icon-circle"><i class="fas fa-comments"></i></div>
+                Msg
+            </div>
+            <div class="nav-item" onclick="navTo('view-meetings', this)">
+                <div class="icon-circle"><i class="fas fa-video"></i></div>
+                Meets
+            </div>
+            <div class="nav-item" onclick="logout()">
+                <div class="icon-circle" style="background:rgba(255,65,108,0.1); color:var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
+                Exit
+            </div>
+        </nav>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-employee" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-employee')">&times;</span>
+            <h2 id="modal-title">Add Employee</h2>
+            <div class="form-group"><label>ID</label><input type="text" id="m-id"></div>
+            <div class="form-group"><label>Name</label><input type="text" id="m-name"></div>
+            <div class="form-group"><label>Company</label><input type="text" id="m-company" placeholder="e.g. Aforeserve"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="m-email"></div>
+            <div class="form-group"><label>Mobile (WhatsApp)</label><input type="tel" id="m-mobile" placeholder="e.g. 919876543210"></div>
+            <div class="form-group"><label>Password</label><input type="text" id="m-pass" value="1234"></div>
+            <div class="form-group"><label>Photo URL</label><input type="text" id="m-photo" placeholder="https://..."></div>
+            <button id="btn-save-emp" class="btn btn-success btn-block" onclick="saveEmployee()">Save</button>
+            <button class="btn btn-danger btn-block" onclick="deleteEmployee()" id="btn-del-emp" style="display:none;">Delete</button>
+        </div>
+    </div>
+
+    <div id="modal-edit-visit" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-edit-visit')">&times;</span>
+            <h2>Edit Visit Log</h2>
+            <input type="hidden" id="v-edit-id">
+            <div class="form-group"><label>Employee</label><input type="text" id="v-edit-ename" readonly style="background:#eee; color:#666;"></div>
+            <div class="form-group"><label>Date</label><input type="text" id="v-edit-date" readonly style="background:#eee; color:#666;"></div>
+            <div class="form-group"><label>Complaint / Ticket No.</label><input type="text" id="v-edit-ticket" placeholder="Update Number"></div>
+            <div class="form-group"><label>Remarks</label><textarea id="v-edit-remarks" rows="3" placeholder="Update Remarks"></textarea></div>
+            <button class="btn btn-primary btn-block" onclick="saveVisitEdit()">Update Log</button>
+        </div>
+    </div>
+
+    <div id="modal-import" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-import')">&times;</span>
+            <h2>Import Employees</h2>
+            <p style="font-size:0.8rem; color:#666; margin-bottom:15px;">Upload a <strong>CSV</strong> file (from Excel). The system will <strong>UPDATE</strong> existing employees and <strong>ADD</strong> new ones based on ID.</p>
+            <button class="btn btn-outline btn-block" onclick="downloadTemplate()" style="margin-bottom:10px;"><i class="fas fa-download"></i> Download Template</button>
+            <div class="form-group"><label>Select CSV File</label><input type="file" id="csv-file-input" accept=".csv"></div>
+            <button class="btn btn-success btn-block" onclick="processCSV()">Import / Update Data</button>
+        </div>
+    </div>
+
+    <div id="modal-settings" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-settings')">&times;</span>
+            <h2>Admin Settings</h2>
+            <div style="text-align:center; margin-bottom:20px; background:rgba(78, 84, 200, 0.1); padding:10px; border-radius:15px;">
+                <small style="color:#666;">Current App Version</small><br>
+                <strong style="font-size:1.2rem; color:var(--primary);" id="settings-version-display">2.0.3</strong>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+                <button class="btn btn-primary btn-block" onclick="forceAppUpdate()"><i class="fas fa-sync"></i> Update App</button>
+                <button class="btn btn-success btn-block" onclick="downloadBackup()"><i class="fas fa-database"></i> Backup DB</button>
+            </div>
+
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Local App Update</h3>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Load a new HTML file from your device to update app instantly (Session only).</p>
+            <div class="form-group"><label>Select new index.html</label><input type="file" id="local-app-file" accept=".html"></div>
+            <button class="btn btn-warning btn-block" onclick="loadLocalApp()"><i class="fas fa-upload"></i> Load & Restart App</button>
+
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Cloud Configuration</h3>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:10px;">Updating this will sync to all employee devices.</p>
+            <div class="form-group"><label>Bin ID</label><input type="text" id="adm-bin-id"></div>
+            <div class="form-group"><label>Master API Key</label><input type="password" id="adm-api-key"></div>
+            
+            <h3 style="font-size:1rem; margin:15px 0 10px; border-top:1px solid #eee; padding-top:10px;">Profile</h3>
+            <div class="form-group"><label>Email (For Notifications)</label><input type="email" id="adm-email"></div>
+            <div class="form-group"><label>Mobile (WhatsApp)</label><input type="tel" id="adm-mobile"></div>
+            <div class="form-group"><label>Admin Password</label><input type="password" id="adm-pass" placeholder="New Password"></div>
+            
+            <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="saveAdminSettings()">Save All Settings</button>
+        </div>
+    </div>
+
+    <div id="modal-cloud-config" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-cloud-config')">&times;</span>
+            <h2><i class="fas fa-cloud"></i> Cloud Setup</h2>
+            <p style="font-size:0.8rem; color:#666; margin-bottom:15px;">Update keys to connect to the shared folder. All devices must use these keys.</p>
+            <div class="form-group"><label>Bin ID</label><input type="text" id="login-cloud-bin"></div>
+            <div class="form-group"><label>Master API Key</label><input type="password" id="login-cloud-key"></div>
+            <button class="btn btn-success btn-block" onclick="saveLoginCloudSetup()"><i class="fas fa-plug"></i> Update & Connect</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const DEFAULT_BIN_ID = ""; 
+        const DEFAULT_API_KEY = "";
+        const APP_VERSION = "2.0.3";
+        const DEFAULT_ADMIN_MOBILE = "7381345000"; 
+
+        const AUTO_EMAIL_TO = "amit.dey@ufomoviez.com";
+
+        let JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
+        let JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
+
+        const DEFAULT_EMPLOYEES = [
+            { id: "101", name: "John Doe", company: "Tech Corp", mail: "john@tech.com", mobile: "919876543210", pass: "1234", photo: "" },
+            { id: "102", name: "Jane Smith", company: "Tech Corp", mail: "jane@tech.com", mobile: "919876543211", pass: "1234", photo: "" }
+        ]; 
+
+        let state = {
+            user: null,
+            employees: [],
+            attendance: [],
+            leaves: [],
+            visits: [],    
+            notifications: [],
+            messages: [],
+            meetings: [],
+            adminProfile: { email: "admin@eas.com", mobile: DEFAULT_ADMIN_MOBILE, pass: "admin", lockKey: "" }, 
+            cloudConfig: { binId: DEFAULT_BIN_ID, masterKey: DEFAULT_API_KEY }, 
+            lastSeen: {}, 
+            lastModified: 0,
+            autoEmailStatus: { lastDailyDate: null, lastMonthlyDate: null }
+        };
+        
+        let isJsonSync = false;
+        let syncInterval = null;
+        let heartbeatInterval = null;
+        let autoReminderInterval = null;
+        let autoEmailTimer = null;
+
+        const getAvatar = (name) => `https://picsum.photos/seed/${name}/200/200.jpg`;
+
+        window.onload = () => {
+            if(document.getElementById('app-version-login')) document.getElementById('app-version-login').innerText = APP_VERSION;
+            if(document.getElementById('settings-version-display')) document.getElementById('settings-version-display').innerText = APP_VERSION;
+
+            document.getElementById('today-date').innerText = new Date().toDateString();
+            document.getElementById('v-date').valueAsDate = new Date();
+            document.getElementById('ci-filter-date').valueAsDate = new Date();
+            const d = new Date();
+            document.getElementById('hist-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            
+            const repMonthInput = document.getElementById('rep-comp-month');
+            if(repMonthInput) {
+                 repMonthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            }
+            
+            document.getElementById('rep-date').valueAsDate = new Date(); 
+            document.getElementById('rep-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; 
+
+            loadDataLocalOnly();
+            
+            if(state.employees.length === 0) {
+                state.employees = DEFAULT_EMPLOYEES;
+                saveDataLocalOnly(); 
+            }
+
+            switchLogin('emp'); 
+            requestNotificationPermission();
+
+            checkJsonStatus(); 
+        };
+
+        function checkJsonStatus() {
+            if(state.cloudConfig && state.cloudConfig.binId) {
+                JSONBIN_ID = state.cloudConfig.binId;
+                JSONBIN_KEY = state.cloudConfig.masterKey;
+                localStorage.setItem('j_bin_id', JSONBIN_ID);
+                localStorage.setItem('j_api_key', JSONBIN_KEY);
+            } else {
+                JSONBIN_ID = localStorage.getItem('j_bin_id') || DEFAULT_BIN_ID;
+                JSONBIN_KEY = localStorage.getItem('j_api_key') || DEFAULT_API_KEY;
+            }
+
+            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") {
+                setLocalModeUI();
+                return;
+            }
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Cloud Timeout")), 5000)
+            );
+
+            Promise.race([
+                fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } }),
+                timeoutPromise
+            ])
+            .then(res => {
+                if(!res.ok) throw new Error("Offline");
+                return res.json();
+            })
+            .then(data => {
+                isJsonSync = true;
+                document.getElementById('login-sync-dot').className = 'dot online';
+                document.getElementById('login-sync-text').innerText = "Connected";
+                document.getElementById('btn-login-cloud').style.display = 'none';
+                
+                if(data && data.record) {
+                    if(data.record.cloudConfig) {
+                        state.cloudConfig = data.record.cloudConfig;
+                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+                        JSONBIN_ID = state.cloudConfig.binId;
+                        JSONBIN_KEY = state.cloudConfig.masterKey;
+                    }
+                    if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
+                    if(data.record.lastModified > state.lastModified) {
+                        mergeData(data.record);
+                        saveDataLocalOnly();
+                    } else if(state.employees.length === 0 && (!data.record.employees || data.record.employees.length === 0)) {
+                        state.employees = DEFAULT_EMPLOYEES;
+                        uploadToCloudFolder(true); 
+                    }
+                }
+                startAutoSync();
+                startAutoEmailScheduler(); 
+            })
+            .catch(() => {
+                setLocalModeUI();
+            });
+        }
+
+        function setLocalModeUI() {
+            isJsonSync = false;
+            document.getElementById('login-sync-dot').className = 'dot offline';
+            document.getElementById('login-sync-text').innerText = "Local Mode (Offline)";
+            document.getElementById('btn-login-cloud').style.display = 'block';
+            
+            if(state.employees.length === 0) {
+                state.employees = DEFAULT_EMPLOYEES;
+                saveDataLocalOnly();
+            }
+        }
+
+        function startAutoSync() {
+            if(syncInterval) clearInterval(syncInterval);
+            if(!isJsonSync) return;
+            updateSyncStatus('syncing', 'Syncing...');
+            window.syncInterval = setInterval(pollCloudDatabase, 10000);
+            if(heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(updateHeartbeat, 120000); 
+        }
+
+        function stopAutoSync() {
+            if (window.syncInterval) clearInterval(window.syncInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (autoReminderInterval) clearInterval(autoReminderInterval);
+            if (autoEmailTimer) clearInterval(autoEmailTimer);
+            if(document.getElementById('dash-sync-dot')) {
+                document.getElementById('dash-sync-dot').className = 'dot large offline';
+                document.getElementById('dash-sync-text').innerText = "Offline";
+            }
+        }
+
+        function startAutoEmailScheduler() {
+            if(autoEmailTimer) clearInterval(autoEmailTimer);
+            autoEmailTimer = setInterval(checkAutoEmailTrigger, 60000);
+        }
+
+        function checkAutoEmailTrigger() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const date = now.getDate();
+            const todayStr = now.toDateString();
+
+            if (hours === 12 && minutes === 5 && state.autoEmailStatus.lastDailyDate !== todayStr) {
+                console.log("Triggering Daily Auto Email...");
+                generateAndMailDailyReport();
+                state.autoEmailStatus.lastDailyDate = todayStr;
+                saveData(); 
+            }
+
+            if (date === 1 && hours === 10 && minutes === 0) {
+                const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+                if(state.autoEmailStatus.lastMonthlyDate !== monthStr) {
+                    console.log("Triggering Monthly Auto Email...");
+                    generateAndMailMonthlyReport();
+                    state.autoEmailStatus.lastMonthlyDate = monthStr;
+                    saveData();
+                }
+            }
+        }
+
+        function generateAndMailDailyReport() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            let csvContent = "Date,Name,ID,Status,Time\n";
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === dateStr);
+                let status = 'Absent';
+                if(att) { status = att.status; }
+                csvContent += `${dateStr},${emp.name},${emp.id},${status},${att ? att.time : '-'}\n`;
+            });
+            const subject = encodeURIComponent(`Daily Attendance Report - ${dateStr}`);
+            const body = encodeURIComponent(`Please find Daily Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
+            window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
+            alert("⏰ Auto-Email Triggered: Daily Report email draft opened.");
+        }
+
+        function generateAndMailMonthlyReport() {
+            const now = new Date();
+            const monthVal = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`; 
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            let csvContent = "Month,Emp Name,Present,Leave,Absent,Total Days\n";
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                csvContent += `${monthVal},${emp.name},${p},${l},${a},${p+l+a}\n`;
+            });
+
+            const subject = encodeURIComponent(`Monthly Attendance Report - ${monthVal}`);
+            const body = encodeURIComponent(`Please find Monthly Attendance Report below. Copy/Paste this into a file named report.csv:\n\n` + csvContent);
+            
+            window.open(`mailto:${AUTO_EMAIL_TO}?subject=${subject}&body=${body}`, '_blank');
+            alert("⏰ Auto-Email Triggered: Monthly Report email draft opened.");
+        }
+
+        function startAutoReminders() {
+            if(autoReminderInterval) clearInterval(autoReminderInterval);
+            autoReminderInterval = setInterval(() => {
+                if(document.visibilityState === 'hidden') return;
+                const now = new Date();
+                const hour = now.getHours();
+                if(hour < 8 || hour > 13) return; 
+                const today = now.toISOString().split('T')[0];
+                if(!state.user || state.user.role !== 'emp') return;
+                const checkedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+                if(!checkedIn) {
+                    sendLocalNotification("Attendance Reminder", "It's time to Check In! Please tap the Check-In button.");
+                    toast("⏰ Reminder: Please Check In!");
+                }
+            }, 300000); 
+        }
+
+        function updateHeartbeat() {
+            if(!state.user || !isJsonSync) return;
+            pollCloudDatabase(true).then(() => {
+                if(!state.lastSeen) state.lastSeen = {};
+                state.lastSeen[state.user.id] = Date.now();
+                saveData(true); 
+            });
+        }
+
+        function pollCloudDatabase(silent = false) {
+            if(state.isSaving) return Promise.resolve();
+            if(JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return Promise.resolve();
+            return fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
+            .then(res => { if(!res.ok) throw new Error("Sync Error"); return res.json(); })
+            .then(data => {
+                if(data && data.record) {
+                    if(data.record.cloudConfig) {
+                        state.cloudConfig = data.record.cloudConfig;
+                        localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+                        localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+                        JSONBIN_ID = state.cloudConfig.binId;
+                        JSONBIN_KEY = state.cloudConfig.masterKey;
+                    }
+                    if(data.record.autoEmailStatus) state.autoEmailStatus = data.record.autoEmailStatus;
+                    if(data.record.lastModified > state.lastModified) {
+                        mergeData(data.record);
+                        saveDataLocalOnly(); 
+                        if(!silent) refreshCurrentView();
+                        updateSyncStatus('online', 'Live (Updated)');
+                    } else {
+                        if(!silent) updateSyncStatus('online', 'Live');
+                    }
+                }
+            })
+            .catch(() => { if(!silent) updateSyncStatus('offline', 'Local Mode'); });
+        }
+
+        function uploadToCloudFolder(silent = false) {
+            if(!isJsonSync || JSONBIN_ID.includes("YOUR_BIN_ID_HERE")) return;
+            fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_KEY } })
+            .then(res => { if(!res.ok) throw new Error("Pre-check failed"); return res.json(); })
+            .then(cloudData => {
+                if(cloudData && cloudData.record) {
+                    if(cloudData.record.lastModified > state.lastModified) {
+                        console.warn("Sync Conflict Detected");
+                        mergeData(cloudData.record);
+                        saveDataLocalOnly();
+                        if(!silent) {
+                            alert("⚠️ Sync Conflict: Another device updated data. Loaded latest version.");
+                            refreshCurrentView();
+                        }
+                        return; 
+                    }
+                }
+                state.isSaving = true;
+                state.lastModified = Date.now();
+                fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+                    body: JSON.stringify(state)
+                })
+                .then(() => { if(!silent) updateSyncStatus('online', 'Saved'); })
+                .catch(err => { console.error(err); if(!silent) toast("Sync failed"); })
+                .finally(() => { state.isSaving = false; });
+            })
+            .catch(err => { if(!silent) toast("Cannot verify cloud status. Saved locally only."); });
+        }
+
+        function mergeData(cloud) {
+            if(cloud.employees) state.employees = cloud.employees;
+            if(cloud.attendance) state.attendance = cloud.attendance;
+            if(cloud.leaves) state.leaves = cloud.leaves;
+            if(cloud.visits) state.visits = cloud.visits;
+            if(cloud.notifications) state.notifications = cloud.notifications;
+            if(cloud.messages) state.messages = cloud.messages;
+            if(cloud.meetings) state.meetings = cloud.meetings || [];
+            if(cloud.adminProfile) state.adminProfile = cloud.adminProfile;
+            if(cloud.lastSeen) state.lastSeen = cloud.lastSeen;
+            state.lastModified = cloud.lastModified;
+        }
+
+        function loadDataLocalOnly() {
+            const data = localStorage.getItem('eas_pro_db_v1');
+            if(data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    state.employees = parsed.employees || [];
+                    state.attendance = parsed.attendance || [];
+                    state.leaves = parsed.leaves || [];
+                    state.visits = parsed.visits || [];
+                    state.notifications = parsed.notifications || [];
+                    state.messages = parsed.messages || [];
+                    state.meetings = parsed.meetings || [];
+                    state.adminProfile = parsed.adminProfile || state.adminProfile;
+                    state.cloudConfig = parsed.cloudConfig || state.cloudConfig;
+                    state.lastSeen = parsed.lastSeen || {};
+                    state.lastModified = parsed.lastModified || 0;
+                    state.autoEmailStatus = parsed.autoEmailStatus || { lastDailyDate: null, lastMonthlyDate: null };
+                } catch (e) {
+                    console.error("Local data corrupted", e);
+                    state.employees = []; state.lastModified = 0;
+                }
+            } else {
+                state.employees = []; state.lastModified = 0;
+            }
+        }
+
+        function saveData(silent = false) {
+            saveDataLocalOnly(); 
+            if(isJsonSync) uploadToCloudFolder(silent);
+        }
+
+        function saveDataLocalOnly() {
+            localStorage.setItem('eas_pro_db_v1', JSON.stringify(state));
+        }
+
+        function refreshCurrentView() {
+            if(!state.user) return;
+            const id = document.querySelector('main.active').id;
+            if(id === 'view-dashboard') loadDash();
+            if(id === 'view-team') loadTeam();
+            if(id === 'view-checkins-adm') loadAdminCheckins();
+            if(id === 'view-visits-adm') loadAdminVisits();
+            if(id === 'view-history') loadHistory();
+            if(id === 'view-notifications') loadNotifications();
+            if(id === 'view-home') { checkStatus(); loadEmpLeaveStatus(); checkUnreadNotifications(); }
+            if(id === 'view-chat-emp') { loadEmpChatTargets(); loadEmpChat(); }
+            if(id === 'view-chat-adm') loadAdminChatHistory();
+            if(id === 'view-approvals') loadAdminApprovals();
+            if(id === 'view-reports') { 
+                if(document.getElementById('rep-date').value) generateDailyReport();
+                if(document.getElementById('rep-month').value) generateMonthlyReport();
+                if(document.getElementById('rep-comp-month').value) generateCompanyReport();
+            }
+            if(id === 'view-meetings') {
+                loadMeetingsList();
+                loadMeetingTargetOptions();
+            }
+        }
+
+        function switchLogin(role) {
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+            document.getElementById(role==='emp'?'tab-emp':'tab-adm').classList.add('active');
+            document.getElementById('login-id').value = '';
+            document.getElementById('login-id').placeholder = role==='emp' ? "Emp ID" : "Admin";
+            document.getElementById('login-pass').value = '';
+            const hintEl = document.getElementById('login-hint');
+            const cloudBtn = document.getElementById('btn-login-cloud');
+            cloudBtn.style.display = 'block'; 
+            if(role === 'emp') { hintEl.innerText = 'Default Pass: 1234'; }
+            else { hintEl.innerText = ''; }
+        }
+
+        function login() {
+            const id = document.getElementById('login-id').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            if(!id || !pass) return toast("Fill all fields");
+            const role = document.querySelector('.tab.active').id === 'tab-emp' ? 'emp' : 'adm';
+            if(JSONBIN_ID === "YOUR_BIN_ID_HERE" || JSONBIN_ID === "") { toast("Note: Running in Local Mode"); }
+            if(role === 'emp') {
+                const emp = state.employees.find(e => e.id === id);
+                if(emp && (emp.pass === pass || pass === '1234')) {
+                    state.user = { ...emp, role: 'emp' };
+                    initEmp();
+                } else { toast("Invalid Credentials"); }
+            } else {
+                const admin = state.adminProfile;
+                if(id === 'admin' && pass === admin.pass) {
+                    state.user = { id: 'admin', name: 'Admin', role: 'adm' };
+                    initAdmin();
+                } else { toast("Invalid Credentials"); }
+            }
+        }
+
+        function initEmp() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            document.getElementById('nav-emp').style.display = 'flex';
+            document.getElementById('nav-adm').style.display = 'none';
+            document.getElementById('u-name').innerText = state.user.name;
+            document.getElementById('u-id').innerText = state.user.id;
+            document.getElementById('u-comp').innerText = state.user.company || "N/A";
+            document.getElementById('header-avatar').src = state.user.photo || getAvatar(state.user.name);
+            document.getElementById('btn-force-sync').style.display = 'none';
+            checkUnreadNotifications();
+            checkUnreadMessages();
+            loadEmpLeaveStatus();
+            navTo('view-home');
+            updateHeartbeat(); 
+            startAutoReminders(); 
+        }
+
+        function initAdmin() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            document.getElementById('nav-emp').style.display = 'none';
+            document.getElementById('nav-adm').style.display = 'flex';
+            document.getElementById('settings-btn').style.display = 'block';
+            document.getElementById('header-avatar').src = getAvatar('Admin');
+            document.getElementById('btn-force-sync').style.display = 'block';
+            loadDash();
+            navTo('view-dashboard');
+        }
+
+        function logout() {
+            if(confirm("Logout?")) {
+                stopAutoSync();
+                window.location.reload();
+            }
+        }
+
+        function navTo(id, el) {
+            document.querySelectorAll('main').forEach(m => m.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
+            const titles = {
+                'view-home': 'Home', 'view-visits-emp': 'Visits', 'view-history': 'History', 'view-notifications': 'Alerts',
+                'view-dashboard': 'Dash', 'view-checkins-adm': 'Check-Ins', 'view-team': 'Team', 'view-visits-adm': 'Reports', 'view-reminders': 'Reminders',
+                'view-chat-emp': 'Messages', 'view-chat-adm': 'Chat Engine', 'view-approvals': 'Leave Mgmt', 'view-reports': 'Reports', 'view-meetings': 'Meets'
+            };
+            document.getElementById('page-title').innerText = titles[id];
+            refreshCurrentView();
+        }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.className = 'show';
+            setTimeout(() => t.className = '', 3000);
+        }
+
+        function updateSyncStatus(st, txt) {
+            const dashDot = document.getElementById('dash-sync-dot');
+            const dashTxt = document.getElementById('dash-sync-text');
+            if(dashDot) {
+                dashDot.className = `dot large ${st}`;
+                dashTxt.innerText = txt;
+            }
+            const hDot = document.getElementById('sync-dot');
+            if(hDot) {
+                document.getElementById('header-sync-area').style.display = 'flex';
+                hDot.className = `dot ${st}`;
+                document.getElementById('sync-text').innerText = txt;
+            }
+        }
+
+        function openCloudConfig() {
+            const modal = document.getElementById('modal-cloud-config');
+            document.getElementById('login-cloud-bin').value = JSONBIN_ID;
+            document.getElementById('login-cloud-key').value = JSONBIN_KEY;
+            modal.style.display = 'flex';
+            setTimeout(()=>modal.classList.add('open'),10);
+        }
+
+        function saveLoginCloudSetup() {
+            state.cloudConfig.binId = document.getElementById('login-cloud-bin').value;
+            state.cloudConfig.masterKey = document.getElementById('login-cloud-key').value;
+            localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+            localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+            saveData();
+            closeModal('modal-cloud-config');
+            toast("Keys Saved. Reloading...");
+            setTimeout(() => window.location.reload(), 1500);
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        }
+
+        function sendLocalNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/2919/2919600.png" });
+            }
+        }
+
+        // --- UPDATED: IMPORTANT GROUP MSG (ADMIN) ---
+        function sendImportantGroupMsg() {
+            const message = prompt("Enter Important Message for UFO Tech Odisha Group:");
+            if(!message) return;
+
+            const adminMobile = state.adminProfile.mobile || DEFAULT_ADMIN_MOBILE; 
+
+            // NEW LOGIC: Ask Admin to choose mode
+            const sendIndividual = confirm("Send Mode:\n\nClick [OK] to send INDIVIDUALLY to all employees.\nClick [CANCEL] to Copy message for Group Chat.");
+
+            if(sendIndividual) {
+                // INDIVIDUAL BLAST MODE
+                const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+                if(employeesWithMobile.length === 0) return toast("No employees with mobile numbers found.");
+
+                if(!confirm(`Send Important Message to ${employeesWithMobile.length} employees individually? This will open multiple windows.`)) return;
+
+                let sentCount = 0;
+                const interval = setInterval(() => {
+                    if(sentCount >= employeesWithMobile.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const emp = employeesWithMobile[sentCount];
+                    const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`, '_blank');
+                    
+                    sentCount++;
+                }, 1000); 
+                toast("Sending messages to all employees...");
+
+            } else {
+                // GROUP CHAT MODE (Original Logic)
+                if(!confirm(`Prepare Group Message via Admin WhatsApp (${adminMobile})?\n\nNote: This will open a chat with Admin number pre-filled with the message. Please copy it and send to your WhatsApp Group.`)) return;
+
+                const url = `https://wa.me/${adminMobile}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                toast("Opened WhatsApp with Admin. Copy and send to group.");
+            }
+        }
+
+        function sendBulkAttendanceReminder() {
+            const message = "Good morning! Please remember to check in for today’s attendance before 11:00 AM. Your check-in time and location will be recorded automatically.";
+            
+            const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+            const count = employeesWithMobile.length;
+
+            if(count === 0) return toast("No employees with mobile numbers found.");
+
+            if(!confirm(`Send Check-In Reminder to ${count} employees via WhatsApp? \n\nThis will open ${count} WhatsApp windows sequentially.`)) return;
+
+            let sentCount = 0;
+            const interval = setInterval(() => {
+                if(sentCount >= employeesWithMobile.length) {
+                    clearInterval(interval);
+                    toast(`Sent reminders to ${sentCount} employees.`);
+                    return;
+                }
+                
+                const emp = employeesWithMobile[sentCount];
+                const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                
+                sentCount++;
+            }, 1000);
+        }
+
+        function performCheckIn() {
+            const btn = document.getElementById('btn-checkin');
+            if(btn.classList.contains('checked-in') || btn.classList.contains('on-leave')) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const alreadyCheckedIn = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+            if(alreadyCheckedIn) {
+                return toast("Already checked in today!");
+            }
+
+            const process = (lat, lng) => {
+                const now = new Date();
+                state.attendance.push({
+                    eid: state.user.id,
+                    name: state.user.name,
+                    date: today,
+                    time: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                    lat: lat, lng: lng,
+                    status: 'Present'
+                });
+                saveData(); 
+                checkStatus();
+                toast("Checked In!");
+            };
+            if(document.getElementById('loc-toggle').checked && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(p => process(p.coords.latitude, p.coords.longitude), () => process("Err","Err"));
+            } else { process("Off","Off"); }
+        }
+
+        function checkStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const rec = state.attendance.find(a => a.eid === state.user.id && a.date === today);
+            const btn = document.getElementById('btn-checkin');
+            if(rec) {
+                if(rec.status === 'Leave') {
+                    btn.classList.add('on-leave');
+                    btn.classList.remove('checked-in');
+                    btn.innerHTML = `On Leave <small>${rec.time}</small>`;
+                    document.getElementById('loc-msg').innerText = "Attendance marked as Leave";
+                } else {
+                    btn.classList.add('checked-in');
+                    btn.classList.remove('on-leave');
+                    btn.innerHTML = `Checked In <small>${rec.time}</small>`;
+                    document.getElementById('loc-msg').innerText = "📍 Location Active";
+                }
+            } else {
+                btn.classList.remove('checked-in');
+                btn.classList.remove('on-leave');
+                btn.innerHTML = `Check In <small>Tap to Start</small>`;
+                document.getElementById('loc-msg').innerText = "📍 Location Active";
+            }
+        }
+
+        function applyLeave() {
+            const f = document.getElementById('l-from').value; const t = document.getElementById('l-to').value; const r = document.getElementById('l-reason').value;
+            if(!f || !t || !r) return toast("Fill details");
+            const leaveId = Date.now();
+            state.leaves.push({ id: leaveId, eid: state.user.id, name: state.user.name, from: f, to: t, reason: r, status: 'Pending' });
+            if(state.adminProfile.email) {
+                const subject = encodeURIComponent(`Leave Request: ${state.user.name} (${f} to ${t})`);
+                const body = encodeURIComponent(`Employee ID: ${state.user.id}\nName: ${state.user.name}\nDates: ${f} to ${t}\nReason: ${r}\n\nPlease approve/reject via EAS App.`);
+                window.open(`mailto:${state.adminProfile.email}?subject=${subject}&body=${body}`, '_blank');
+            } else {
+                toast("Leave Applied (Admin Email not set)");
+            }
+            saveData(); 
+            loadEmpLeaveStatus();
+        }
+
+        function loadEmpLeaveStatus() {
+            const list = document.getElementById('emp-leave-status-list');
+            const myLeaves = state.leaves.filter(l => l.eid === state.user.id).reverse();
+            if(myLeaves.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem;'>No leave requests found.</p>";
+            } else {
+                list.innerHTML = myLeaves.map(l => {
+                    let badgeColor = 'bg-warning';
+                    if(l.status === 'Approved') badgeColor = 'bg-present';
+                    if(l.status === 'Rejected') badgeColor = 'bg-danger';
+                    return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.5); padding:10px; border-radius:10px; margin-bottom:8px;">
+                        <div>
+                            <div style="font-size:0.85rem; font-weight:600;">${l.from} to ${l.to}</div>
+                            <div style="font-size:0.7rem; color:#666;">${l.reason}</div>
+                        </div>
+                        <span class="badge ${badgeColor}">${l.status}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function saveVisit() {
+            const date = document.getElementById('v-date').value; const type = document.getElementById('v-type').value; const ticket = document.getElementById('v-ticket').value; const remarks = document.getElementById('v-remarks').value;
+            if(!date || !ticket) return toast("Date & Ticket No required");
+            state.visits.push({ id: Date.now(), eid: state.user.id, ename: state.user.name, date, type, ticket, remarks });
+            saveData(); toast("Visit Logged"); loadEmpVisits();
+            document.getElementById('v-remarks').value = "";
+        }
+
+        function loadEmpVisits() {
+            const list = document.getElementById('emp-visits-list');
+            const myVisits = state.visits.filter(v => v.eid === state.user.id).reverse();
+            if(myVisits.length === 0) list.innerHTML = "<p style='text-align:center; color:#999; padding:10px;'>No logs found.</p>";
+            else list.innerHTML = myVisits.map(v => `
+                <div class="card" style="padding:15px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:700;">
+                        <span>${v.type}</span><span style="font-size:0.8rem; color:#666;">${v.date}</span>
+                    </div>
+                    <div style="font-size:0.9rem; margin:5px 0;">Ticket: <b>${v.ticket}</b></div>
+                    <div style="font-size:0.8rem; color:#555;">${v.remarks}</div>
+                </div>
+            `).join('');
+        }
+
+        function loadHistory() {
+            const monthVal = document.getElementById('hist-month').value;
+            const tbody = document.getElementById('history-tbody');
+            const myAtt = state.attendance.filter(a => a.eid === state.user.id && a.date.startsWith(monthVal));
+            if(myAtt.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No records</td></tr>";
+            } else {
+                tbody.innerHTML = myAtt.map(a => {
+                    let badgeClass = 'bg-present';
+                    let badgeText = 'Present';
+                    if(a.status === 'Leave') { badgeClass = 'bg-warning'; badgeText = 'Leave'; }
+                    return `
+                        <tr>
+                            <td>${a.date}</td>
+                            <td>${a.time}</td>
+                            <td style="font-size:0.8rem;">${a.lat.substring(0,8)}...</td>
+                            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function loadAdminApprovals() {
+            const list = document.getElementById('pending-approvals-list');
+            const requests = state.leaves.filter(l => l.status === 'Pending');
+            if(requests.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No pending leave requests.</p>";
+                return;
+            }
+            list.innerHTML = requests.map(r => `
+                <div class="card" style="padding:15px; border-left: 5px solid var(--warning);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <h3 style="margin:0; font-size:1rem;">${r.name}</h3>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-sm btn-danger" onclick="deleteLeave(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:5px; font-weight:600; color:var(--primary);">${r.from} to ${r.to}</div>
+                    <p style="margin:0 0 10px 0; font-size:0.9rem; color:#555; font-style:italic;">"${r.reason}"</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-success btn-sm" onclick="processLeave(${r.id}, 'Approved')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="processLeave(${r.id}, 'Rejected')">Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadLeaveReports(type) {
+            const list = document.getElementById('pending-approvals-list');
+            const now = new Date();
+            let startMonth, endMonth;
+            if(type === 'current') {
+                startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            } else {
+                startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+                endMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+            }
+            const reports = state.leaves.filter(l => { return (l.from <= endMonth && l.to >= startMonth); });
+            if(reports.length === 0) {
+                list.innerHTML = `<p style='text-align:center; color:#999; padding:20px;'>No leaves found for ${type === 'current' ? 'this' : 'last'} month.</p>`;
+                return;
+            }
+            list.innerHTML = reports.map(r => `
+                <div class="card" style="padding:10px; margin-bottom:10px;">
+                    <div style="font-weight:bold;">${r.name}</div>
+                    <div style="font-size:0.9rem;">${r.from} to ${r.to}</div>
+                    <div style="font-size:0.8rem; color:#666;">Status: <span class="badge ${r.status==='Approved'?'bg-present':r.status==='Rejected'?'bg-danger':'bg-warning'}">${r.status}</span></div>
+                </div>
+            `).join('');
+        }
+
+        function getDatesInRange(startDate, endDate) {
+            const date = new Date(startDate.getTime());
+            const dates = [];
+            while (date <= endDate) {
+                dates.push(new Date(date).toISOString().split('T')[0]);
+                date.setDate(date.getDate() + 1);
+            }
+            return dates;
+        }
+
+        function processLeave(id, status) {
+            if(status === 'Rejected') { if(!confirm(`Are you sure you want to Reject this leave request?`)) return; }
+            const idx = state.leaves.findIndex(l => l.id === id);
+            if(idx > -1) {
+                const leave = state.leaves[idx];
+                state.leaves[idx].status = status;
+                state.notifications.push({
+                    id: Date.now(),
+                    target: state.leaves[idx].eid,
+                    message: `Your leave request (${state.leaves[idx].from} to ${state.leaves[idx].to}) was ${status}.`,
+                    date: new Date().toLocaleString(),
+                    read: false
+                });
+                if(status === 'Approved') {
+                    const employee = state.employees.find(e => e.id === leave.eid);
+                    if(employee && employee.mail) {
+                        const subject = encodeURIComponent(`Leave Approved: ${leave.from} to ${leave.to}`);
+                        const body = encodeURIComponent(`Hello ${employee.name},\n\nYour leave request has been approved.\n\nDates: ${leave.from} to ${leave.to}\nReason: ${leave.reason}\n\nRegards,\nAdmin`);
+                        window.open(`mailto:${employee.mail}?subject=${subject}&body=${body}`, '_blank');
+                    }
+                    const start = new Date(leave.from);
+                    const end = new Date(leave.to);
+                    const leaveDates = getDatesInRange(start, end);
+                    leaveDates.forEach(dateStr => {
+                        state.attendance = state.attendance.filter(a => !(a.eid === leave.eid && a.date === dateStr));
+                        state.attendance.push({
+                            eid: leave.eid,
+                            name: leave.name,
+                            date: dateStr,
+                            time: "Leave",
+                            lat: "-",
+                            lng: "-",
+                            status: "Leave"
+                        });
+                    });
+                }
+                saveData();
+                loadAdminApprovals(); 
+                loadDash();
+                toast(status === 'Approved' ? "Approved & Email Sent" : "Request Rejected");
+            }
+        }
+
+        function generateCompanyReport() {
+            const monthVal = document.getElementById('rep-comp-month').value; 
+            const selectedComp = document.getElementById('rep-comp-select').value; 
+            
+            if(!monthVal) return;
+            const tbody = document.getElementById('company-report-tbody');
+            const [year, month] = monthVal.split('-').map(Number);
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const allCompanies = [...new Set(state.employees.map(e => e.company))].filter(c => c && c.trim() !== "");
+            
+            const selectEl = document.getElementById('rep-comp-select');
+            if(selectEl.options.length <= 1) { 
+                allCompanies.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.innerText = c;
+                    selectEl.appendChild(opt);
+                });
+            }
+
+            const companiesToShow = (selectedComp === 'ALL') ? allCompanies : allCompanies.filter(c => c === selectedComp);
+            
+            let rows = '';
+            let totalEmpCount = 0;
+            let totalPresent = 0;
+            let totalAbsent = 0;
+            let totalLeave = 0;
+
+            companiesToShow.forEach(comp => {
+                const compEmps = state.employees.filter(e => e.company === comp);
+                const empCount = compEmps.length;
+                
+                let p = 0, l = 0, a = 0;
+                
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const atts = state.attendance.filter(at => at.date === dayStr && compEmps.some(e => e.id === at.eid));
+                    
+                    atts.forEach(at => {
+                        if(at.status === 'Present') p++;
+                        else if(at.status === 'Leave') l++;
+                    });
+                }
+
+                a = (empCount * daysInMonth) - (p + l);
+
+                totalEmpCount += empCount;
+                totalPresent += p;
+                totalAbsent += a;
+                totalLeave += l;
+
+                const percentage = (empCount * daysInMonth) > 0 ? Math.round(((p + l) / (empCount * daysInMonth)) * 100) : 0;
+
+                rows += `
+                <tr>
+                    <td><div style="font-weight:600; color:var(--primary);">${comp}</div></td>
+                    <td>${empCount}</td>
+                    <td><span class="badge bg-present">${p}</span></td>
+                    <td><span class="badge bg-danger">${a}</span></td>
+                    <td><span class="badge bg-warning">${l}</span></td>
+                    <td><small>${percentage}%</small></td>
+                </tr>`;
+            });
+
+            if(companiesToShow.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>No companies found.</td></tr>";
+            } else {
+                tbody.innerHTML = rows;
+            }
+        }
+
+        function downloadCompanyReportCSV() {
+            const monthVal = document.getElementById('rep-comp-month').value;
+            const selectedComp = document.getElementById('rep-comp-select').value;
+            
+            if(!monthVal) return toast("Select Month");
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const allCompanies = [...new Set(state.employees.map(e => e.company))].filter(c => c && c.trim() !== "");
+            const companiesToExport = (selectedComp === 'ALL') ? allCompanies : allCompanies.filter(c => c === selectedComp);
+            
+            const headers = ["Month", "Company", "Total Employees", "Present", "Absent", "Leave", "Attendance %"];
+            const rows = [];
+            
+            companiesToExport.forEach(comp => {
+                const compEmps = state.employees.filter(e => e.company === comp);
+                const empCount = compEmps.length;
+                let p = 0, l = 0, a = 0;
+
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const atts = state.attendance.filter(at => at.date === dayStr && compEmps.some(e => e.id === at.eid));
+                    atts.forEach(at => {
+                        if(at.status === 'Present') p++;
+                        else if(at.status === 'Leave') l++;
+                    });
+                }
+                a = (empCount * daysInMonth) - (p + l);
+                const percentage = (empCount * daysInMonth) > 0 ? Math.round(((p + l) / (empCount * daysInMonth)) * 100) : 0;
+                
+                rows.push([monthVal, comp, empCount, p, a, l, percentage]);
+            });
+
+            downloadCSV([headers, ...rows], `Company_Report_${monthVal}.csv`);
+        }
+
+        function generateDailyReport() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return;
+            const area = document.getElementById('daily-report-area');
+            
+            let presentCount = 0;
+            let absentCount = 0;
+            let leaveCount = 0;
+            let rows = '';
+
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { presentCount++; statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { leaveCount++; statusBadge = 'bg-warning'; }
+                } else {
+                    absentCount++;
+                }
+
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${emp.id}</td>
+                    <td><span class="badge ${statusBadge}">${status}</span></td>
+                    <td>${att ? att.time : '-'}</td>
+                </tr>`;
+            });
+
+            area.innerHTML = `
+                <div class="report-summary-box">
+                    <div class="rep-stat"><h4>${presentCount}</h4><small>Present</small></div>
+                    <div class="rep-stat"><h4>${absentCount}</h4><small>Abs</small></div>
+                    <div class="rep-stat"><h4>${leaveCount}</h4><small>Leave</small></div>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
+        }
+
+        function generateMonthlyReport() {
+            const monthVal = document.getElementById('rep-month').value; 
+            if(!monthVal) return;
+            const area = document.getElementById('monthly-report-area');
+            const [year, month] = monthVal.split('-').map(Number);
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            let rows = '';
+            let grandTotalPresent = 0;
+            let grandTotalAbsent = 0;
+            let grandTotalLeave = 0;
+
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+
+                grandTotalPresent += p;
+                grandTotalLeave += l;
+                grandTotalAbsent += a;
+                
+                const attPct = ((p+l)/(p+l+a)*100).toFixed(1);
+                
+                rows += `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${p}</td>
+                    <td>${l}</td>
+                    <td>${a}</td>
+                    <td>${p+l+a}</td>
+                    <td>${attPct}%</td>
+                </tr>`;
+            });
+
+            area.innerHTML = `
+                <div class="report-summary-box" style="margin-bottom:15px;">
+                    <div class="rep-stat"><h4>${grandTotalPresent}</h4><small>Present</small></div>
+                    <div class="rep-stat"><h4>${grandTotalAbsent}</h4><small>Abs</small></div>
+                    <div class="rep-stat"><h4>${grandTotalLeave}</h4><small>Leave</small></div>
+                </div>
+                <div style="overflow-x:auto;"><table class="data-table"><thead><thead><tr><th>Emp Name</th><th>Present</th><th>Leave</th><th>Absent</th><th>Total Days</th><th>Att %</th></tr></thead><tbody>${rows}</tbody></table></div>
+            `;
+        }
+
+        function downloadDailyReportCSV() {
+            const date = document.getElementById('rep-date').value;
+            if(!date) return toast("Select Date");
+            const area = document.getElementById('daily-report-area');
+            const rows = [['Date', 'Name', 'ID', 'Status', 'Time']];
+            
+            state.employees.forEach(emp => {
+                const att = state.attendance.find(a => a.eid === emp.id && a.date === date);
+                let status = 'Absent';
+                let statusBadge = 'bg-danger';
+                if(att) {
+                    status = att.status;
+                    if(att.status === 'Present') { statusBadge = 'bg-present'; }
+                    else if(att.status === 'Leave') { statusBadge = 'bg-warning'; }
+                } 
+                rows.push([date, emp.name, emp.id, status, att ? att.time : '-']);
+            });
+            downloadCSV(rows, `Daily_Report_${date}.csv`);
+        }
+
+        function downloadMonthlyReportCSV() {
+            const monthVal = document.getElementById('rep-month').value;
+            if(!monthVal) return toast("Select Month");
+            const [year, month] = monthVal.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const prefix = `${year}-${String(month).padStart(2,'0')}`;
+            
+            const rows = [['Month', 'Emp Name', 'Present', 'Leave', 'Absent', 'Total Days']];
+            
+            state.employees.forEach(emp => {
+                let p = 0, l = 0, a = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dayStr = `${prefix}-${String(d).padStart(2,'0')}`;
+                    const att = state.attendance.find(a => a.eid === emp.id && a.date === dayStr);
+                    if(att) {
+                        if(att.status === 'Present') p++;
+                        else if(att.status === 'Leave') l++;
+                    } else {
+                        a++;
+                    }
+                }
+                rows.push([monthVal, emp.name, p, l, a, p+l+a]);
+            });
+            downloadCSV(rows, `Monthly_Report_${monthVal}.csv`);
+        }
+
+        function sendAdminMessage() {
+            const target = document.getElementById('chat-target-adm').value;
+            const msg = document.getElementById('chat-msg-adm').value;
+            if(!msg) return toast("Type a message.");
+            state.messages.push({
+                id: Date.now(),
+                sender: 'Admin',
+                senderName: 'Admin',
+                target: target,
+                content: msg,
+                timestamp: new Date().toLocaleString()
+            });
+            saveData();
+            document.getElementById('chat-msg-adm').value = "";
+            loadAdminChatHistory();
+            toast("Message Sent");
+        }
+
+        function loadAdminChatHistory() {
+            const list = document.getElementById('admin-msg-history');
+            const msgs = state.messages.filter(m => m.sender === 'Admin' || m.target === 'admin').slice().reverse();
+            if(msgs.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999;'>No messages yet.</p>";
+                return;
+            }
+            list.innerHTML = msgs.map(m => {
+                const isMine = m.sender === 'Admin';
+                return `
+                <div class="msg-bubble ${isMine ? 'sent' : 'received'}">
+                    <div style="font-size:0.75rem; font-weight:700; margin-bottom:2px; opacity:0.8;">
+                        ${isMine ? 'To: '+m.target : 'From: '+m.senderName}
+                    </div>
+                    ${m.content}
+                    <span class="msg-meta">${m.timestamp}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function loadEmpChatTargets() {
+            const select = document.getElementById('emp-chat-target');
+            if(!select) return;
+            let html = `<option value="admin">To: Admin</option>`;
+            state.employees.forEach(e => {
+                if(e.id !== state.user.id) {
+                    html += `<option value="${e.id}">To: ${e.name}</option>`;
+                }
+            });
+            select.innerHTML = html;
+        }
+
+        function sendEmpMessage() {
+            const target = document.getElementById('emp-chat-target').value;
+            const msg = document.getElementById('emp-chat-input').value.trim();
+            if(!msg) return toast("Type a message");
+            
+            state.messages.push({
+                id: Date.now(),
+                sender: state.user.id,
+                senderName: state.user.name,
+                target: target,
+                content: msg,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            saveData();
+            document.getElementById('emp-chat-input').value = "";
+            loadEmpChat();
+            toast("Message Sent");
+        }
+
+        function handleEnterEmpChat(e) {
+            if(e.key === 'Enter') sendEmpMessage();
+        }
+
+        function loadEmpChat() {
+            const list = document.getElementById('chat-list-emp');
+            const myMsgs = state.messages.filter(m => 
+                m.target === 'ALL' || 
+                m.target === state.user.id || 
+                m.sender === state.user.id
+            ).reverse();
+            
+            if(myMsgs.length === 0) {
+                list.innerHTML = "<div style='text-align:center; color:#999; margin-top:20px;'>No messages yet.</div>";
+            } else {
+                list.innerHTML = myMsgs.map(m => {
+                    const isMine = m.sender === state.user.id;
+                    let label = isMine ? 'You' : m.senderName;
+                    if(m.target === 'ALL') label = `${m.senderName} (All)`;
+                    
+                    return `
+                    <div class="msg-bubble ${isMine ? 'sent' : 'received'}">
+                        <div style="font-size:0.75rem; font-weight:700; margin-bottom:2px; opacity:0.8;">
+                            ${label}
+                        </div>
+                        ${m.content}
+                        <span class="msg-meta">${m.timestamp}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function checkUnreadMessages() {
+            const unreadCount = state.messages.filter(m => 
+                m.sender !== state.user.id && 
+                (m.target === 'ALL' || m.target === state.user.id)
+            ).length;
+            const badge = document.getElementById('emp-chat-badge');
+            if(unreadCount > 0) { badge.innerText = unreadCount; badge.classList.add('show'); }
+            else { badge.classList.remove('show'); }
+        }
+
+        function loadDash() {
+            document.getElementById('stat-emp').innerText = state.employees.length;
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stat-pres').innerText = state.attendance.filter(a => a.date === today && a.status !== 'Leave').length;
+            const targetSelect = document.getElementById('chat-target-adm');
+            let opts = `<option value="ALL">ALL EMPLOYEES</option>`;
+            state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
+            targetSelect.innerHTML = opts;
+            loadOnlineUsers();
+        }
+
+        function loadOnlineUsers() {
+            const list = document.getElementById('online-users-list');
+            const now = Date.now();
+            const onlineThreshold = 5 * 60 * 1000; 
+            const onlineEmployees = state.employees.filter(e => {
+                const lastSeen = state.lastSeen[e.id];
+                return lastSeen && (now - lastSeen < onlineThreshold);
+            });
+            if(onlineEmployees.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem; padding:10px;'>No employees currently online.</p>";
+            } else {
+                list.innerHTML = onlineEmployees.map(e => `
+                    <div class="online-user-row">
+                        <div class="dot online" style="width:8px; height:8px;"></div>
+                        <div style="font-weight:600; font-size:0.9rem;">${e.name}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function loadAdminCheckins() {
+            const filterDate = document.getElementById('ci-filter-date').value;
+            const tbody = document.getElementById('checkins-tbody');
+            const data = state.attendance.filter(a => a.date === filterDate);
+            if(data.length === 0) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No check-ins</td></tr>";
+            else tbody.innerHTML = data.map(a => `
+                <tr>
+                    <td><input type="checkbox" class="chk-ci" value="${a.date}_${a.eid}"></td>
+                    <td><b>${a.name}</b></td>
+                    <td>${a.time}</td>
+                    <td>${a.status === 'Leave' ? '-' : `<a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:var(--primary);">Map</a>`}</td>
+                    <td><span class="badge ${a.status === 'Leave' ? 'bg-warning' : 'bg-present'}">${a.status === 'Leave' ? 'Leave' : 'Present'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleAllChecks(source) {
+            document.querySelectorAll('.chk-ci').forEach(c => c.checked = source.checked);
+        }
+
+        function deleteSelectedCheckins() {
+            const checks = document.querySelectorAll('.chk-ci:checked');
+            if(checks.length === 0) return toast("Select records first");
+            if(!confirm(`Delete ${checks.length} records?`)) return;
+            const today = new Date().toISOString().split('T')[0];
+            checks.forEach(c => {
+                const [date, eid] = c.value.split('_');
+                state.attendance = state.attendance.filter(a => !(a.date === date && a.eid === eid));
+            });
+            saveData(); loadAdminCheckins(); loadDash(); toast("Deleted");
+        }
+
+        function proxyCheckInAll() {
+            if(!confirm("Check in ALL employees for today as 'Present'?")) return;
+            const today = new Date().toISOString().split('T')[0];
+            const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            state.employees.forEach(e => {
+                if(!state.attendance.find(a => a.eid === e.id && a.date === today)) {
+                    state.attendance.push({
+                        eid: e.id, name: e.name, date: today, time: time, lat: "Proxy", lng: "Proxy", status: "Present"
+                    });
+                }
+            });
+            saveData(); loadAdminCheckins(); loadDash(); toast("All Checked In");
+        }
+
+        function loadTeam() {
+            const list = document.getElementById('team-list');
+            const targetSelect = document.getElementById('rem-target');
+            let opts = `<option value="ALL">ALL Employees</option>`;
+            state.employees.forEach(e => opts += `<option value="${e.id}">${e.name} (${e.id})</option>`);
+            targetSelect.innerHTML = opts;
+            list.innerHTML = state.employees.map(e => `
+                <div class="list-item">
+                    <div class="user-info">
+                        <img src="${e.photo || getAvatar(e.name)}" class="avatar">
+                        <div class="user-details">
+                            <h4>${e.name}</h4>
+                            <p>${e.company}</p>
+                            <p>${e.mail}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+                        <div style="display:flex; gap:5px;">
+                            <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="contactViaEmail('${e.mail}')"><i class="fas fa-envelope"></i></div>
+                            <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="contactViaWhatsApp('${e.mobile}')"><i class="fab fa-whatsapp"></i></div>
+                        </div>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="downloadEmployee('${e.id}')"><i class="fas fa-download"></i></div>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="resetPassword('${e.id}')"><i class="fas fa-key"></i></div>
+                        <div class="icon-circle" style="width:32px; height:32px; font-size:0.8rem; cursor:pointer;" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadAdminVisits() {
+            const tbody = document.getElementById('admin-visits-tbody');
+            if(state.visits.length === 0) tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>No visits</td></tr>";
+            else tbody.innerHTML = state.visits.slice().reverse().map(v => `
+                <tr>
+                    <td>${v.date}</td>
+                    <td>${v.ename}</td>
+                    <td>${v.type}</td>
+                    <td>${v.ticket}</td>
+                    <td>${v.remarks}</td>
+                    <td>
+                        <div class="icon-circle" style="width:28px; height:28px; font-size:0.75rem; cursor:pointer;" onclick="openEditVisitModal(${v.id})">
+                            <i class="fas fa-edit"></i> 
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openEditVisitModal(id) {
+            const v = state.visits.find(x => x.id === id);
+            if(!v) return;
+            document.getElementById('v-edit-id').value = v.id;
+            document.getElementById('v-edit-ename').value = v.ename;
+            document.getElementById('v-edit-date').value = v.date;
+            document.getElementById('v-edit-ticket').value = v.ticket;
+            document.getElementById('v-edit-remarks').value = v.remarks;
+            const modal = document.getElementById('modal-edit-visit');
+            modal.style.display = 'flex'; setTimeout(()=>modal.classList.add('open'),10);
+        }
+
+        function saveVisitEdit() {
+            const id = parseInt(document.getElementById('v-edit-id').value);
+            const newTicket = document.getElementById('v-edit-ticket').value.trim();
+            const newRemarks = document.getElementById('v-edit-remarks').value.trim();
+            if(!newTicket) return toast("Ticket number required");
+            const idx = state.visits.findIndex(x => x.id === id);
+            if(idx > -1) {
+                state.visits[idx].ticket = newTicket;
+                state.visits[idx].remarks = newRemarks;
+                saveData();
+                loadAdminVisits();
+                closeModal('modal-edit-visit');
+                toast("Visit Log Updated");
+            }
+        }
+
+        function contactViaEmail(email) {
+            if(!email) return toast("Email not found");
+            window.location.href = `mailto:${email}`;
+        }
+
+        function contactViaWhatsApp(mobile) {
+            if(!mobile) return toast("Mobile not found");
+            let cleanMobile = mobile.replace(/[^0-9]/g, '');
+            window.open(`https://wa.me/${cleanMobile}`, '_blank');
+        }
+
+        function downloadEmployee(eid) {
+            const emp = state.employees.find(e => e.id === eid);
+            if(!emp) return;
+            const data = [["Field", "Value"], ["Employee ID", emp.id], ["Name", emp.name], ["Company", emp.company], ["Email", emp.mail], ["Mobile", emp.mobile], ["Password", emp.pass], ["Photo URL", emp.photo]];
+            downloadCSV(data, `Employee_${emp.name}.csv`);
+        }
+
+        function downloadAllEmployees() {
+            const headers = ["ID", "Name", "Company", "Email", "Mobile", "Password", "Photo"];
+            const rows = state.employees.map(e => [e.id, e.name, e.company, e.mail, e.mobile, e.pass, e.photo]);
+            downloadCSV([headers, ...rows], "All_Employees_Database.csv");
+        }
+
+        function downloadVisitsCSV() {
+            const headers = ["Date", "Emp ID", "Emp Name", "Type", "Ticket No", "Remarks"];
+            const rows = state.visits.map(v => [v.date, v.eid, v.ename, v.type, v.ticket, v.remarks]);
+            downloadCSV([headers, ...rows], "Visits_Report.csv");
+        }
+
+        function downloadCSV(data, filename) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            data.forEach(row => { csvContent += row.map(item => `"${item}"`).join(",") + "\r\n"; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function resetPassword(eid) {
+            const newPass = prompt("Enter new password:");
+            if(newPass) {
+                const idx = state.employees.findIndex(e => e.id === eid);
+                if(idx > -1) { state.employees[idx].pass = newPass; saveData(); toast("Password Reset"); }
+            }
+        }
+        
+        function deleteAllEmployees() {
+            if(confirm("CONFIRM: This will PERMANENTLY DELETE all employee data. Continue?")) {
+                state.employees = [];
+                saveData(); 
+                loadTeam();
+                toast("All employee data deleted successfully.");
+            }
+        }
+
+        function sendReminder() {
+            const target = document.getElementById('rem-target').value;
+            const msg = document.getElementById('rem-msg').value;
+            if(!msg) return toast("Enter message");
+            const notif = { id: Date.now(), message: msg, date: new Date().toLocaleString(), read: false };
+            if(target === 'ALL') { 
+                state.notifications.push(notif); 
+                toast("Sent to All");
+            } else {
+                const emp = state.employees.find(e => e.id === target);
+                if(emp) {
+                    notif.target = emp.id;
+                    state.notifications.push(notif);
+                    toast(`Sent to ${emp.name}`);
+                }
+            }
+            saveData();
+        }
+
+        function sendWhatsApp() {
+            const target = document.getElementById('rem-target').value;
+            const msg = document.getElementById('rem-msg').value;
+            if(!msg) return toast("Enter message");
+            
+            if(target === 'ALL') {
+                let i = 0;
+                const interval = setInterval(() => {
+                    if(i >= state.employees.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    const emp = state.employees[i];
+                    if(emp.mobile) {
+                        let clean = emp.mobile.replace(/[^0-9]/g, '');
+                        window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+                    }
+                    i++;
+                }, 1000);
+                toast(`Opened WhatsApp for employees.`);
+            } else {
+                const emp = state.employees.find(e => e.id === target);
+                if(emp && emp.mobile) {
+                    contactViaWhatsApp(emp.mobile + "?text=" + encodeURIComponent(msg));
+                }
+            }
+        }
+
+        function showAddModal() {
+            document.getElementById('m-id').value = '';
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-company').value = '';
+            document.getElementById('m-email').value = '';
+            document.getElementById('m-mobile').value = '';
+            document.getElementById('m-photo').value = '';
+            document.getElementById('m-pass').value = '1234';
+            document.getElementById('btn-save-emp').innerText = "Add Employee";
+            document.getElementById('btn-del-emp').style.display = 'none';
+            document.getElementById('modal-title').innerText = "Add Employee";
+            openModal('modal-employee');
+        }
+
+        function editEmployee(id) {
+            const emp = state.employees.find(e => e.id === id);
+            if(!emp) return;
+            document.getElementById('m-id').value = emp.id;
+            document.getElementById('m-id').readOnly = true;
+            document.getElementById('m-name').value = emp.name;
+            document.getElementById('m-company').value = emp.company;
+            document.getElementById('m-email').value = emp.mail;
+            document.getElementById('m-mobile').value = emp.mobile;
+            document.getElementById('m-photo').value = emp.photo || '';
+            document.getElementById('m-pass').value = emp.pass;
+            document.getElementById('btn-save-emp').innerText = "Update Employee";
+            document.getElementById('btn-del-emp').style.display = 'block';
+            document.getElementById('modal-title').innerText = "Edit Employee";
+            openModal('modal-employee');
+        }
+
+        function saveEmployee() {
+            const id = document.getElementById('m-id').value.trim();
+            const name = document.getElementById('m-name').value.trim();
+            const comp = document.getElementById('m-company').value.trim();
+            const mail = document.getElementById('m-email').value.trim();
+            const mobile = document.getElementById('m-mobile').value.trim();
+            const pass = document.getElementById('m-pass').value.trim();
+            const photo = document.getElementById('m-photo').value.trim();
+
+            if(!id || !name) return toast("ID and Name required");
+
+            const existing = state.employees.findIndex(e => e.id === id);
+            if(existing > -1) {
+                state.employees[existing] = { id, name, company: comp, mail, mobile, pass, photo };
+                toast("Employee Updated");
+            } else {
+                state.employees.push({ id, name, company: comp, mail, mobile, pass, photo });
+                toast("Employee Added");
+            }
+            saveData();
+            closeModal('modal-employee');
+            loadTeam();
+        }
+
+        function deleteEmployee() {
+            const id = document.getElementById('m-id').value;
+            if(confirm("Delete this employee?")) {
+                state.employees = state.employees.filter(e => e.id !== id);
+                saveData();
+                closeModal('modal-employee');
+                loadTeam();
+                toast("Deleted");
+            }
+        }
+
+        function showImportModal() {
+            openModal('modal-import');
+        }
+
+        function downloadTemplate() {
+            const headers = ["ID", "Name", "Company", "Email", "Mobile", "Password", "Photo"];
+            const sample = ["103", "Sample User", "Sample Co", "sample@mail.com", "9100000000", "1234", ""];
+            downloadCSV([headers, sample], "employee_template.csv");
+        }
+
+        function processCSV() {
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+            if(!file) return toast("Select a file");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
+                let count = 0;
+                for(let i=1; i<rows.length; i++) {
+                    const row = rows[i];
+                    if(row.length >= 2 && row[0] !== "") {
+                        const [id, name, company, mail, mobile, pass, photo] = row;
+                        const idx = state.employees.findIndex(e => e.id === id);
+                        const empData = { id, name, company: company||"", mail: mail||"", mobile: mobile||"", pass: pass||"1234", photo: photo||"" };
+                        if(idx > -1) state.employees[idx] = empData;
+                        else state.employees.push(empData);
+                        count++;
+                    }
+                }
+                saveData();
+                closeModal('modal-import');
+                loadTeam();
+                toast(`Processed ${count} employees`);
+                fileInput.value = "";
+            };
+            reader.readAsText(file);
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notifications-list');
+            const myNotifs = state.notifications.filter(n => !n.target || n.target === state.user.id).reverse();
+            if(myNotifs.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>No notifications.</p>";
+            } else {
+                list.innerHTML = myNotifs.map(n => `
+                    <div class="notif-item ${n.read ? '' : 'unread'}">
+                        <div style="font-weight:600; font-size:0.95rem;">${n.message}</div>
+                        <div class="notif-meta">${n.date}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function checkUnreadNotifications() {
+            const count = state.notifications.filter(n => (!n.target || n.target === state.user.id) && !n.read).length;
+        }
+
+        function markAllRead() {
+            state.notifications.forEach(n => {
+                if(!n.target || n.target === state.user.id) n.read = true;
+            });
+            saveData(); loadNotifications();
+        }
+
+        // --- UPDATED MEETINGS FUNCTIONS ---
+        function loadMeetingTargetOptions() {
+            const sel = document.getElementById('meet-target');
+            // Reset to just first option to avoid duplicates
+            sel.innerHTML = `<option value="ALL">ALL EMPLOYEES (Broadcast)</option>`;
+            
+            state.employees.forEach(e => {
+                sel.innerHTML += `<option value='${e.id}'>${e.name} (Individual)</option>`;
+            });
+        }
+
+        function scheduleMeeting() {
+            const title = document.getElementById('meet-title').value;
+            const target = document.getElementById('meet-target').value;
+            const date = document.getElementById('meet-date').value;
+            const time = document.getElementById('meet-time').value;
+            const type = document.getElementById('meet-type').value;
+
+            if(!title || !target || !date || !time) return toast("Fill all fields");
+
+            const msg = `Meeting: ${title}\nDate: ${date}\nTime: ${time}\nType: ${type}\n\nLink: [Zoom/Meet Link]`;
+
+            if(target === 'ALL') {
+                // 1. CHECK FOR MOBILE NUMBERS
+                const employeesWithMobile = state.employees.filter(e => e.mobile && e.mobile.trim() !== "");
+                if(employeesWithMobile.length === 0) return toast("No employees with mobile numbers found.");
+
+                // 2. CONFIRM
+                if(!confirm(`Broadcast meeting invitation to ${employeesWithMobile.length} employees individually?`)) return;
+
+                // 3. SAVE TO HISTORY
+                state.meetings.push({ 
+                    id: Date.now(), 
+                    title: title + " (Broadcast)", 
+                    target: 'ALL', 
+                    targetName: 'All Employees', 
+                    date, 
+                    time, 
+                    type 
+                });
+
+                // 4. LOOP AND SEND
+                let sentCount = 0;
+                const interval = setInterval(() => {
+                    if(sentCount >= employeesWithMobile.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const emp = employeesWithMobile[sentCount];
+                    const cleanMobile = emp.mobile.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(msg)}`, '_blank');
+                    
+                    sentCount++;
+                }, 1000); // 1 second delay between each window
+
+                toast("Sending to All Employees...");
+
+            } else {
+                // EXISTING INDIVIDUAL LOGIC
+                const emp = state.employees.find(e => e.id === target);
+                if(!emp) return toast("Employee not found");
+
+                // Add to history
+                state.meetings.push({ id: Date.now(), title, target, targetName: emp.name, date, time, type });
+                
+                // Send WhatsApp
+                if(emp.mobile) {
+                    window.open(`https://wa.me/${emp.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                    toast("Invitation Sent via WhatsApp");
+                } else {
+                    toast("No mobile number for employee");
+                }
+            }
+            
+            saveData();
+            loadMeetingsList();
+        }
+
+        function loadMeetingsList() {
+            const list = document.getElementById('meetings-list');
+            if(state.meetings.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#999;'>No meetings scheduled.</p>";
+            } else {
+                list.innerHTML = state.meetings.slice().reverse().map(m => `
+                    <div class="card" style="padding:12px; margin-bottom:10px;">
+                        <div style="font-weight:700;">${m.title}</div>
+                        <div style="font-size:0.85rem; color:#666;">With: ${m.targetName}</div>
+                        <div style="font-size:0.85rem;">${m.date} @ ${m.time} (${m.type})</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function checkPin() {
+            const pass = prompt("Enter Admin Password to access Settings:");
+            if(pass === state.adminProfile.pass) {
+                openSettings();
+            } else if (pass !== null) {
+                toast("Incorrect Password");
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('adm-bin-id').value = state.cloudConfig.binId;
+            document.getElementById('adm-api-key').value = state.cloudConfig.masterKey;
+            document.getElementById('adm-email').value = state.adminProfile.email;
+            document.getElementById('adm-mobile').value = state.adminProfile.mobile;
+            openModal('modal-settings');
+        }
+
+        function saveAdminSettings() {
+            state.cloudConfig.binId = document.getElementById('adm-bin-id').value;
+            state.cloudConfig.masterKey = document.getElementById('adm-api-key').value;
+            state.adminProfile.email = document.getElementById('adm-email').value;
+            state.adminProfile.mobile = document.getElementById('adm-mobile').value;
+            const newPass = document.getElementById('adm-pass').value;
+            if(newPass) state.adminProfile.pass = newPass;
+
+            localStorage.setItem('j_bin_id', state.cloudConfig.binId);
+            localStorage.setItem('j_api_key', state.cloudConfig.masterKey);
+            saveData();
+            closeModal('modal-settings');
+            toast("Settings Saved. Reloading...");
+            setTimeout(() => window.location.reload(), 1500);
+        }
+
+        function deleteLeave(id) {
+            if(confirm("Delete this request?")) {
+                state.leaves = state.leaves.filter(l => l.id !== id);
+                saveData();
+                loadAdminApprovals();
+            }
+        }
+
+        function downloadBackup() {
+            const json = JSON.stringify(state, null, 2);
+            const blob = new Blob([json], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `eas_backup_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function loadLocalApp() {
+            const file = document.getElementById('local-app-file').files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.write(e.target.result);
+                    document.close();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function forceAppUpdate() {
+            if('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    reg.unregister().then(() => {
+                        window.location.reload();
+                    });
+                });
+            } else {
+                window.location.reload();
+            }
+        }
+
+        function manualSync() {
+            if(!isJsonSync) return toast("Offline Mode");
+            const btn = document.getElementById('btn-force-sync');
+            btn.classList.add('syncing');
+            pollCloudDatabase().then(() => {
+                setTimeout(() => btn.classList.remove('syncing'), 1000);
+            });
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.style.display = 'flex';
+            setTimeout(()=>m.classList.add('open'),10);
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('open');
+            setTimeout(()=>m.style.display = 'none',300);
+        }
+
+        function handleLocationToggle(el) {
+            const msg = document.getElementById('loc-msg');
+            if(el.checked) {
+                msg.innerText = "📍 Location Active";
+            } else {
+                msg.innerText = "📍 Location Disabled";
+            }
+        }
+    </script>
+</body>
+</html>
